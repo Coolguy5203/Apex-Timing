@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0a0a0b"/>
+  <!-- Grid lines -->
+  <line x1="0" y1="157" x2="1200" y2="157" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="0" y1="315" x2="1200" y2="315" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="0" y1="472" x2="1200" y2="472" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="300" y1="0" x2="300" y2="630" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="600" y1="0" x2="600" y2="630" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="900" y1="0" x2="900" y2="630" stroke="#1e1e24" stroke-width="1"/>
+  <!-- Top purple bar -->
+  <rect width="1200" height="6" fill="#b84fff"/>
+  <!-- Bottom bar -->
+  <rect y="624" width="1200" height="6" fill="#1e1e24"/>
+  <!-- Logo mark -->
+  <rect x="80" y="180" width="140" height="140" rx="24" fill="#16161a" stroke="#1e1e24" stroke-width="1.5"/>
+  <rect x="80" y="180" width="140" height="5" rx="2" fill="#b84fff"/>
+  <polygon points="150,208 174,276 162,276 150,244 138,276 126,276" fill="#b84fff"/>
+  <rect x="130" y="262" width="40" height="10" rx="3" fill="#b84fff"/>
+  <!-- Main text -->
+  <text x="248" y="248" font-family="system-ui, -apple-system, sans-serif" font-size="80" font-weight="600" fill="#e8e8f0" letter-spacing="4">APEX</text>
+  <text x="248" y="302" font-family="ui-monospace, monospace" font-size="32" font-weight="400" fill="#b84fff" letter-spacing="12">TIMING</text>
+  <!-- Divider -->
+  <rect x="80" y="356" width="520" height="1.5" fill="#1e1e24"/>
+  <!-- Tagline -->
+  <text x="80" y="392" font-family="ui-monospace, monospace" font-size="18" font-weight="400" fill="#6b6b7e" letter-spacing="4">IRACING LAP TIME TRACKER</text>
+  <!-- Right side decoration: fake leaderboard -->
+  <rect x="720" y="120" width="400" height="390" rx="12" fill="#16161a" stroke="#1e1e24" stroke-width="1.5"/>
+  <rect x="720" y="120" width="400" height="4" rx="2" fill="#b84fff"/>
+  <text x="740" y="158" font-family="ui-monospace, monospace" font-size="11" font-weight="400" fill="#6b6b7e" letter-spacing="3">LEADERBOARD</text>
+  <!-- Row 1 - P1 -->
+  <rect x="720" y="168" width="400" height="52" fill="#b84fff" fill-opacity="0.06"/>
+  <rect x="720" y="168" width="3" fill="#b84fff" height="52"/>
+  <text x="745" y="200" font-family="system-ui, sans-serif" font-size="22" font-weight="600" fill="#b84fff">1</text>
+  <text x="778" y="198" font-family="system-ui, sans-serif" font-size="14" font-weight="500" fill="#e8e8f0" letter-spacing="1">CORNWELL</text>
+  <text x="778" y="214" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e">Spa · Ferrari 296</text>
+  <text x="1080" y="200" font-family="ui-monospace, monospace" font-size="18" font-weight="600" fill="#b84fff" text-anchor="end">2:17.483</text>
+  <text x="1080" y="214" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e" text-anchor="end">—</text>
+  <!-- Row 2 -->
+  <rect x="723" y="222" width="397" height="52" fill="none"/>
+  <text x="745" y="254" font-family="system-ui, sans-serif" font-size="22" font-weight="600" fill="#c0c0c0">2</text>
+  <text x="778" y="252" font-family="system-ui, sans-serif" font-size="14" font-weight="500" fill="#e8e8f0" letter-spacing="1">HAMILTON</text>
+  <text x="778" y="268" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e">Spa · Ferrari 296</text>
+  <text x="1080" y="252" font-family="ui-monospace, monospace" font-size="18" font-weight="500" fill="#e8e8f0" text-anchor="end">2:17.941</text>
+  <text x="1080" y="268" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e" text-anchor="end">+0.458s</text>
+  <!-- Row 3 -->
+  <text x="745" y="308" font-family="system-ui, sans-serif" font-size="22" font-weight="600" fill="#cd7f32">3</text>
+  <text x="778" y="306" font-family="system-ui, sans-serif" font-size="14" font-weight="500" fill="#e8e8f0" letter-spacing="1">VERSTAPPEN</text>
+  <text x="778" y="322" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e">Spa · Ferrari 296</text>
+  <text x="1080" y="306" font-family="ui-monospace, monospace" font-size="18" font-weight="500" fill="#e8e8f0" text-anchor="end">2:18.104</text>
+  <text x="1080" y="322" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e" text-anchor="end">+0.621s</text>
+  <!-- Row 4 -->
+  <text x="745" y="362" font-family="system-ui, sans-serif" font-size="22" font-weight="500" fill="#6b6b7e">4</text>
+  <text x="778" y="360" font-family="system-ui, sans-serif" font-size="14" font-weight="500" fill="#e8e8f0" letter-spacing="1">LECLERC</text>
+  <text x="778" y="376" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e">Spa · Ferrari 296</text>
+  <text x="1080" y="360" font-family="ui-monospace, monospace" font-size="18" font-weight="500" fill="#e8e8f0" text-anchor="end">2:18.567</text>
+  <text x="1080" y="376" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e" text-anchor="end">+1.084s</text>
+  <!-- Row 5 -->
+  <text x="745" y="416" font-family="system-ui, sans-serif" font-size="22" font-weight="500" fill="#6b6b7e">5</text>
+  <text x="778" y="414" font-family="system-ui, sans-serif" font-size="14" font-weight="500" fill="#e8e8f0" letter-spacing="1">NORRIS</text>
+  <text x="778" y="430" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e">Spa · Ferrari 296</text>
+  <text x="1080" y="414" font-family="ui-monospace, monospace" font-size="18" font-weight="500" fill="#e8e8f0" text-anchor="end">2:19.001</text>
+  <text x="1080" y="430" font-family="ui-monospace, monospace" font-size="11" fill="#6b6b7e" text-anchor="end">+1.518s</text>
+  <!-- Separator lines -->
+  <line x1="723" y1="220" x2="1117" y2="220" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="723" y1="274" x2="1117" y2="274" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="723" y1="328" x2="1117" y2="328" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="723" y1="382" x2="1117" y2="382" stroke="#1e1e24" stroke-width="1"/>
+  <line x1="723" y1="436" x2="1117" y2="436" stroke="#1e1e24" stroke-width="1"/>
+</svg>
