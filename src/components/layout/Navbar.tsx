@@ -35,9 +35,10 @@ export function Navbar() {
     setMobileOpen(false);
   };
 
-  const navLinks = [
+ const navLinks = [
     { href: "/", label: "DASHBOARD", icon: Timer },
     { href: "/leaderboard", label: "LEADERBOARD", icon: Trophy },
+    { href: "/team", label: "TEAM", icon: Users },
     { href: "/submit", label: "SUBMIT LAP", icon: Flag },
   ];
 
