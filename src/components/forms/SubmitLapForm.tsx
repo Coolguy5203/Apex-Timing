@@ -164,6 +164,24 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
 
         <div>
           <label className="section-label block mb-2">NOTES <span className="text-race-dim/40 normal-case tracking-normal font-sans font-normal">(optional)</span></label>
+         {/* Laps in session */}
+        <div>
+          <label className="section-label block mb-2">LAPS IN SESSION</label>
+          <div className="relative">
+            <select
+              value={formData.laps_in_session}
+              onChange={(e) => setFormData((p) => ({ ...p, laps_in_session: e.target.value }))}
+              className="input-field appearance-none pr-10 cursor-pointer"
+            >
+              <option value="">— SELECT —</option>
+              {[1,2,3,4,5,6,7,8,9,10,15,20,25,30,40,50].map((n) => (
+                <option key={n} value={n}>{n} {n === 1 ? "LAP" : "LAPS"}</option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-race-dim pointer-events-none" />
+          </div>
+          <p className="text-race-dim/60 text-xs font-mono mt-1.5">How many laps did you complete this session?</p>
+        </div>
           <textarea
             value={formData.notes}
             onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
