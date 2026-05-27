@@ -1,5 +1,16 @@
-import type { Metadata } from "next";
-import "./globals.css";
+export const metadata: Metadata = {
+  title: "APEX TIMING | iRacing Lap Tracker",
+  description: "Professional lap time tracking and leaderboards for iRacing teams",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/apple-touch-icon.svg",
+  },
+  openGraph: {
+    title: "APEX TIMING | iRacing Lap Tracker",
+    description: "Track lap times and dominate the leaderboard with your iRacing team",
+    images: ["/og-image.svg"],
+  },
+};import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { LiveTicker } from "@/components/layout/LiveTicker";
 
