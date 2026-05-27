@@ -14,13 +14,6 @@ export async function getCars(proOnly = false): Promise<Car[]> {
   return data || [];
 }
 
-  if (error) {
-    console.error("Error fetching cars:", error);
-    return [];
-  }
-  return data || [];
-}
-
 export async function getTracks(proOnly = false): Promise<Track[]> {
   const supabase = await createClient();
   let query = supabase.from("tracks").select("*").order("name");
@@ -32,14 +25,6 @@ export async function getTracks(proOnly = false): Promise<Track[]> {
   }
   return data || [];
 }
-
-  if (error) {
-    console.error("Error fetching tracks:", error);
-    return [];
-  }
-  return data || [];
-}
-
 export async function getLeaderboard(
   carId?: string,
   trackId?: string
