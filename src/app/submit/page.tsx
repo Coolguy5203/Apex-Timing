@@ -25,7 +25,8 @@ export default async function SubmitPage() {
     });
   }
 
-  const [cars, tracks] = await Promise.all([getCars(), getTracks()]);
+ const isPro = profile?.is_pro ?? false;
+const [cars, tracks] = await Promise.all([getCars(isPro), getTracks(isPro)]);
 
   return (
     <div className="grid-bg min-h-screen">
