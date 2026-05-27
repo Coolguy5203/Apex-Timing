@@ -21,12 +21,17 @@ export async function getCars(proOnly = false): Promise<Car[]> {
   return data || [];
 }
 
-export async function getTracks(): Promise<Track[]> {
+export async function getTracks(proOnly = false): Promise<Track[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tracks")
-    .select("*")
-    .order("name");
+  let query = supabase.from("tracks").select("*").order("name");
+  if (!proOnly) query = query.eq("is_pro", false);
+  const { data, error } = await query;
+  if (error) {
+    console.error("Error fetching tracks:", error);
+    return [];
+  }
+  return data || [];
+}
 
   if (error) {
     console.error("Error fetching tracks:", error);
