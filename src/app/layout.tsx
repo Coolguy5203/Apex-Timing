@@ -1,3 +1,8 @@
+import type { Metadata } from "next";
+import "./globals.css";
+import { Navbar } from "@/components/layout/Navbar";
+import { LiveTicker } from "@/components/layout/LiveTicker";
+
 export const metadata: Metadata = {
   title: "APEX TIMING | iRacing Lap Tracker",
   description: "Professional lap time tracking and leaderboards for iRacing teams",
@@ -10,13 +15,6 @@ export const metadata: Metadata = {
     description: "Track lap times and dominate the leaderboard with your iRacing team",
     images: ["/og-image.svg"],
   },
-};import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
-import { LiveTicker } from "@/components/layout/LiveTicker";
-
-export const metadata: Metadata = {
-  title: "APEX TIMING | iRacing Lap Tracker",
-  description: "Professional lap time tracking and leaderboards for iRacing teams",
 };
 
 export default function RootLayout({
