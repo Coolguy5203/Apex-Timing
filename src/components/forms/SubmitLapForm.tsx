@@ -18,7 +18,7 @@ interface SubmitLapFormProps {
 
 export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: SubmitLapFormProps) {
   const router = useRouter();
-  const [formData, setFormData] = useState({ car_id: "", track_id: "", lap_time: "", notes: "" });
+  const [formData, setFormData] = useState({ car_id: "", track_id: "", lap_time: "", notes: "", laps_in_session: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
