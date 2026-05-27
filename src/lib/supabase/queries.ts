@@ -2,12 +2,17 @@ import { createClient } from "@/lib/supabase/server";
 import { formatLapTime, formatGap } from "@/utils/lapTime";
 import type { LeaderboardEntry, Car, Track } from "@/types";
 
-export async function getCars(): Promise<Car[]> {
+export async function getCars(proOnly = false): Promise<Car[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("cars")
-    .select("*")
-    .order("name");
+  let query = supabase.from("cars").select("*").order("name");
+  if (!proOnly) query = query.eq("is_pro", false);
+  const { data, error } = await query;
+  if (error) {
+    console.error("Error fetching cars:", error);
+    return [];
+  }
+  return data || [];
+}
 
   if (error) {
     console.error("Error fetching cars:", error);
