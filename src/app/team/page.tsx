@@ -1,33 +1,45 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatLapTime, formatRelativeTime } from "@/utils/lapTime";
-import { Users, Trophy, Timer, Zap, Car, MapPin, Medal, Activity } from "lucide-react";
+import { Users, Trophy, Timer, Zap, Car, MapPin, Medal, Activity, Lock } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Badge } from "@/components/ui/Badge";
 
-async function getTeamData() {
+async function getTeamData(currentUserId: string, teamName: string | null) {
   const supabase = await createClient();
 
-  const [driversRes, lapTimesRes] = await Promise.all([
-    supabase.from("users").select("*").order("created_at", { ascending: true }),
-    supabase.from("lap_times").select(`
+  // Get all drivers on the same team
+  let driversQuery = supabase.from("users").select("*");
+  if (teamName) {
+    driversQuery = driversQuery.eq("team_name", teamName);
+  } else {
+    driversQuery = driversQuery.eq("id", currentUserId);
+  }
+  const { data: drivers } = await driversQuery.order("created_at", { ascending: true });
+
+  const driverIds = (drivers || []).map((d) => d.id);
+
+  // Get lap times only for team members
+  const { data: lapTimes } = await supabase
+    .from("lap_times")
+    .select(`
       id, lap_time_ms, lap_time_formatted, submitted_at, notes,
       driver_id,
       users(driver_name, team_name),
       cars(name, class),
       tracks(name, country)
-    `).order("submitted_at", { ascending: false }),
-  ]);
+    `)
+    .in("driver_id", driverIds)
+    .order("submitted_at", { ascending: false });
 
-  const drivers = driversRes.data || [];
-  const lapTimes = lapTimesRes.data || [];
+  const allLaps = lapTimes || [];
 
   // Per-driver stats
-  const driverStats = drivers.map((driver) => {
-    const driverLaps = lapTimes.filter((l) => l.driver_id === driver.id);
+  const driverStats = (drivers || []).map((driver) => {
+    const driverLaps = allLaps.filter((l) => l.driver_id === driver.id);
     const bestLap = driverLaps.reduce((best, lap) =>
       !best || lap.lap_time_ms < best.lap_time_ms ? lap : best
     , null as any);
-
     return {
       ...driver,
       lap_count: driverLaps.length,
@@ -36,23 +48,36 @@ async function getTeamData() {
     };
   }).sort((a, b) => b.lap_count - a.lap_count);
 
-  // Team stats
-  const totalLaps = lapTimes.length;
-  const totalDrivers = drivers.length;
-  const overallBest = lapTimes.reduce((best, lap) =>
+  const overallBest = allLaps.reduce((best, lap) =>
     !best || lap.lap_time_ms < best.lap_time_ms ? lap : best
   , null as any);
-  const mostActive = driverStats[0];
 
   return {
     drivers: driverStats,
-    recentActivity: lapTimes.slice(0, 10),
-    stats: { totalLaps, totalDrivers, overallBest, mostActive },
+    recentActivity: allLaps.slice(0, 10),
+    stats: {
+      totalLaps: allLaps.length,
+      totalDrivers: driverStats.length,
+      overallBest,
+      mostActive: driverStats[0] || null,
+    },
   };
 }
 
 export default async function TeamPage() {
-  const { drivers, recentActivity, stats } = await getTeamData();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect("/auth");
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  const teamName = profile?.team_name || null;
+  const { drivers, recentActivity, stats } = await getTeamData(user.id, teamName);
 
   return (
     <div className="grid-bg min-h-screen">
@@ -65,26 +90,40 @@ export default async function TeamPage() {
               <Users size={20} className="text-neon-purple" />
             </div>
             <div>
-              <h1 className="font-display font-black text-4xl text-race-text tracking-wider">TEAM HQ</h1>
-              <p className="text-race-dim font-mono text-xs tracking-widest">DRIVER ROSTER & TEAM PERFORMANCE</p>
+              <h1 className="font-display font-black text-4xl text-race-text tracking-wider">
+                {teamName ? teamName.toUpperCase() : "MY TEAM"}
+              </h1>
+              <p className="text-race-dim font-mono text-xs tracking-widest">
+                PRIVATE TEAM DASHBOARD
+              </p>
             </div>
+          </div>
+
+          {/* Privacy notice */}
+          <div className="flex items-center gap-2 mt-4 px-4 py-2 bg-neon-purple/5 border border-neon-purple/20 rounded-lg w-fit">
+            <Lock size={12} className="text-neon-purple" />
+            <span className="text-neon-purple text-xs font-mono tracking-wider">
+              {teamName
+                ? `VISIBLE TO "${teamName.toUpperCase()}" MEMBERS ONLY`
+                : "ONLY YOUR DATA IS SHOWN — SET A TEAM NAME TO SHARE WITH TEAMMATES"}
+            </span>
           </div>
         </div>
 
         {/* Team Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           <div className="race-card p-5">
-            <p className="section-label mb-2">TOTAL DRIVERS</p>
+            <p className="section-label mb-2">TEAM DRIVERS</p>
             <p className="font-display font-black text-4xl text-gradient-purple">{stats.totalDrivers}</p>
-            <p className="text-race-dim text-xs font-mono mt-1">Registered pilots</p>
+            <p className="text-race-dim text-xs font-mono mt-1">Active pilots</p>
           </div>
           <div className="race-card p-5">
-            <p className="section-label mb-2">TOTAL LAPS</p>
+            <p className="section-label mb-2">TEAM LAPS</p>
             <p className="font-display font-black text-4xl text-gradient-purple">{stats.totalLaps}</p>
-            <p className="text-race-dim text-xs font-mono mt-1">All time submissions</p>
+            <p className="text-race-dim text-xs font-mono mt-1">Total submissions</p>
           </div>
           <div className="race-card p-5">
-            <p className="section-label mb-2">FASTEST LAP</p>
+            <p className="section-label mb-2">TEAM BEST</p>
             {stats.overallBest ? (
               <>
                 <p className="lap-time-display text-2xl">{stats.overallBest.lap_time_formatted}</p>
@@ -93,7 +132,7 @@ export default async function TeamPage() {
                 </p>
               </>
             ) : (
-              <p className="text-race-dim font-mono text-sm">NO DATA</p>
+              <p className="text-race-dim font-mono text-sm mt-2">NO DATA</p>
             )}
           </div>
           <div className="race-card p-5">
@@ -106,10 +145,27 @@ export default async function TeamPage() {
                 <p className="text-race-dim text-xs font-mono mt-1">{stats.mostActive.lap_count} LAPS</p>
               </>
             ) : (
-              <p className="text-race-dim font-mono text-sm">NO DATA</p>
+              <p className="text-race-dim font-mono text-sm mt-2">NO DATA</p>
             )}
           </div>
         </div>
+
+        {/* No team warning */}
+        {!teamName && (
+          <div className="race-card p-6 mb-6 border-neon-purple/30">
+            <div className="flex items-start gap-3">
+              <Lock size={16} className="text-neon-purple flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-race-text font-mono font-bold text-sm mb-1">YOU DON'T HAVE A TEAM NAME SET</p>
+                <p className="text-race-dim text-xs font-mono leading-relaxed">
+                  To share this page with teammates, everyone needs to register with the same team name.
+                  Your team name was set when you created your account.
+                  Currently only showing your own data.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -117,7 +173,7 @@ export default async function TeamPage() {
           <div className="lg:col-span-2 race-card p-6">
             <SectionHeader
               title="DRIVER ROSTER"
-              subtitle={`${stats.totalDrivers} registered pilots`}
+              subtitle={`${stats.totalDrivers} team ${stats.totalDrivers === 1 ? "driver" : "drivers"}`}
               icon={Users}
             />
             {drivers.length === 0 ? (
@@ -129,33 +185,28 @@ export default async function TeamPage() {
                 {drivers.map((driver, index) => (
                   <div
                     key={driver.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border border-race-border bg-race-dark hover:border-neon-purple/30 hover:bg-neon-purple/5 transition-all duration-200"
+                    className={`flex items-center gap-4 p-4 rounded-lg border transition-all duration-200 hover:border-neon-purple/30 hover:bg-neon-purple/5
+                      ${driver.id === user.id ? "border-neon-purple/30 bg-neon-purple/5" : "border-race-border bg-race-dark"}`}
                   >
-                    {/* Rank */}
                     <div className={`w-8 h-8 rounded flex items-center justify-center font-display font-black text-lg flex-shrink-0 ${
                       index === 0 ? "text-neon-purple" :
                       index === 1 ? "text-lap-silver" :
-                      index === 2 ? "text-lap-bronze" :
-                      "text-race-dim"
+                      index === 2 ? "text-lap-bronze" : "text-race-dim"
                     }`}>
                       {index === 0 ? <Medal size={18} className="text-neon-purple" /> : index + 1}
                     </div>
-
-                    {/* Avatar */}
                     <div className="w-10 h-10 rounded-lg bg-neon-purple-glow border border-neon-purple/20 flex items-center justify-center flex-shrink-0">
                       <span className="font-display font-black text-neon-purple text-lg">
                         {driver.driver_name.charAt(0).toUpperCase()}
                       </span>
                     </div>
-
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-display font-bold text-race-text tracking-wide">
                           {driver.driver_name.toUpperCase()}
                         </span>
-                        {driver.team_name && (
-                          <Badge variant="muted" size="sm">{driver.team_name}</Badge>
+                        {driver.id === user.id && (
+                          <Badge variant="purple" size="sm">YOU</Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1 flex-wrap">
@@ -173,12 +224,8 @@ export default async function TeamPage() {
                         </span>
                       </div>
                     </div>
-
-                    {/* Lap count badge */}
                     <div className="flex-shrink-0 text-right">
-                      <div className={`text-2xl font-display font-black ${
-                        index === 0 ? "text-neon-purple" : "text-race-text"
-                      }`}>
+                      <div className={`text-2xl font-display font-black ${index === 0 ? "text-neon-purple" : "text-race-text"}`}>
                         {driver.lap_count}
                       </div>
                       <div className="text-race-dim text-xs font-mono">LAPS</div>
@@ -191,14 +238,9 @@ export default async function TeamPage() {
 
           {/* Right column */}
           <div className="space-y-6">
-
-            {/* Team Leaderboard */}
+            {/* Team Best Laps */}
             <div className="race-card p-6">
-              <SectionHeader
-                title="BEST LAPS"
-                subtitle="Fastest per driver"
-                icon={Trophy}
-              />
+              <SectionHeader title="BEST LAPS" subtitle="Fastest per driver" icon={Trophy} />
               {drivers.filter(d => d.best_lap).length === 0 ? (
                 <p className="text-race-dim font-mono text-sm text-center py-6">NO LAPS YET</p>
               ) : (
@@ -212,8 +254,7 @@ export default async function TeamPage() {
                         <span className={`font-display font-black text-lg w-6 text-center ${
                           index === 0 ? "text-neon-purple" :
                           index === 1 ? "text-lap-silver" :
-                          index === 2 ? "text-lap-bronze" :
-                          "text-race-dim"
+                          index === 2 ? "text-lap-bronze" : "text-race-dim"
                         }`}>{index + 1}</span>
                         <div className="flex-1 min-w-0">
                           <p className="font-display font-bold text-race-text text-sm tracking-wide truncate">
@@ -234,11 +275,7 @@ export default async function TeamPage() {
 
             {/* Activity Feed */}
             <div className="race-card p-6">
-              <SectionHeader
-                title="ACTIVITY FEED"
-                subtitle="Latest team submissions"
-                icon={Activity}
-              />
+              <SectionHeader title="TEAM FEED" subtitle="Latest team activity" icon={Activity} />
               {recentActivity.length === 0 ? (
                 <p className="text-race-dim font-mono text-sm text-center py-6">NO ACTIVITY YET</p>
               ) : (
@@ -272,7 +309,6 @@ export default async function TeamPage() {
                 </div>
               )}
             </div>
-
           </div>
         </div>
       </div>
