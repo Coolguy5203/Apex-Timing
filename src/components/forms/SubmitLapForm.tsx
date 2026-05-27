@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { parseLapTime, formatLapTime } from "@/utils/lapTime";
 import type { Car, Track } from "@/types";
-import { Flag, ChevronDown, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Flag, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
+import { SearchSelect } from "@/components/ui/SearchSelect";
 import clsx from "clsx";
 
 interface SubmitLapFormProps {
@@ -18,7 +19,13 @@ interface SubmitLapFormProps {
 
 export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: SubmitLapFormProps) {
   const router = useRouter();
-  const [formData, setFormData] = useState({ car_id: "", track_id: "", lap_time: "", notes: "", laps_in_session: "" });
+  const [formData, setFormData] = useState({
+    car_id: "",
+    track_id: "",
+    lap_time: "",
+    notes: "",
+    laps_in_session: "",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -60,6 +67,7 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         lap_time_ms,
         lap_time_formatted: formatLapTime(lap_time_ms),
         notes: formData.notes || null,
+        laps_in_session: formData.laps_in_session ? parseInt(formData.laps_in_session) : null,
         submitted_at: new Date().toISOString(),
       });
       if (error) throw error;
@@ -101,39 +109,30 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
   return (
     <div className="race-card p-6 md:p-8">
       <div className="space-y-6">
+
+        {/* Car & Track */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="section-label block mb-2">CAR</label>
-            <div className="relative">
-              <select
-                value={formData.car_id}
-                onChange={(e) => { setFormData((p) => ({ ...p, car_id: e.target.value })); if (errors.car_id) setErrors((p) => ({ ...p, car_id: "" })); }}
-                className={clsx("input-field appearance-none pr-10 cursor-pointer", errors.car_id && "border-red-500/50")}
-              >
-                <option value="">— SELECT CAR —</option>
-                {cars.map((opt) => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-race-dim pointer-events-none" />
-            </div>
-            {errors.car_id && <p className="mt-1.5 text-red-400 text-xs font-mono flex items-center gap-1"><AlertCircle size={10} />{errors.car_id}</p>}
-          </div>
-          <div>
-            <label className="section-label block mb-2">CIRCUIT</label>
-            <div className="relative">
-              <select
-                value={formData.track_id}
-                onChange={(e) => { setFormData((p) => ({ ...p, track_id: e.target.value })); if (errors.track_id) setErrors((p) => ({ ...p, track_id: "" })); }}
-                className={clsx("input-field appearance-none pr-10 cursor-pointer", errors.track_id && "border-red-500/50")}
-              >
-                <option value="">— SELECT CIRCUIT —</option>
-                {tracks.map((opt) => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
-              </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-race-dim pointer-events-none" />
-            </div>
-            {errors.track_id && <p className="mt-1.5 text-red-400 text-xs font-mono flex items-center gap-1"><AlertCircle size={10} />{errors.track_id}</p>}
-          </div>
+          <SearchSelect
+            label="CAR"
+            placeholder="— SEARCH CARS —"
+            options={cars.map((c) => ({ id: c.id, name: c.name, class: c.class }))}
+            value={formData.car_id}
+            onChange={(v) => { setFormData((p) => ({ ...p, car_id: v })); if (errors.car_id) setErrors((p) => ({ ...p, car_id: "" })); }}
+            error={errors.car_id}
+            groupBy="class"
+          />
+          <SearchSelect
+            label="CIRCUIT"
+            placeholder="— SEARCH CIRCUITS —"
+            options={tracks.map((t) => ({ id: t.id, name: t.name, country: t.country }))}
+            value={formData.track_id}
+            onChange={(v) => { setFormData((p) => ({ ...p, track_id: v })); if (errors.track_id) setErrors((p) => ({ ...p, track_id: "" })); }}
+            error={errors.track_id}
+            groupBy="country"
+          />
         </div>
 
+        {/* Lap time */}
         <div>
           <label className="section-label block mb-2">BEST LAP TIME</label>
           <div className="relative">
@@ -142,7 +141,11 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
               value={formData.lap_time}
               onChange={(e) => handleLapTimeChange(e.target.value)}
               placeholder="1:23.456"
-              className={clsx("input-field text-2xl tracking-widest", errors.lap_time && "border-red-500/50", previewTime && !errors.lap_time && "border-neon-green/40")}
+              className={clsx(
+                "input-field text-2xl tracking-widest",
+                errors.lap_time && "border-red-500/50",
+                previewTime && !errors.lap_time && "border-neon-green/40"
+              )}
             />
             {previewTime && !errors.lap_time && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
@@ -152,9 +155,14 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
             )}
           </div>
           <p className="text-race-dim/60 text-xs font-mono mt-1.5">Format: M:SS.mmm — e.g. 1:23.456</p>
-          {errors.lap_time && <p className="mt-1.5 text-red-400 text-xs font-mono flex items-center gap-1"><AlertCircle size={10} />{errors.lap_time}</p>}
+          {errors.lap_time && (
+            <p className="mt-1.5 text-red-400 text-xs font-mono flex items-center gap-1">
+              <AlertCircle size={10} />{errors.lap_time}
+            </p>
+          )}
         </div>
 
+        {/* Preview */}
         {previewTime && (
           <div className="bg-neon-purple-glow border border-neon-purple/20 rounded-lg p-4 text-center">
             <p className="section-label mb-1">LAP TIME PREVIEW</p>
@@ -162,9 +170,7 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
           </div>
         )}
 
-        <div>
-          <label className="section-label block mb-2">NOTES <span className="text-race-dim/40 normal-case tracking-normal font-sans font-normal">(optional)</span></label>
-         {/* Laps in session */}
+        {/* Laps in session */}
         <div>
           <label className="section-label block mb-2">LAPS IN SESSION</label>
           <div className="relative">
@@ -182,6 +188,12 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
           </div>
           <p className="text-race-dim/60 text-xs font-mono mt-1.5">How many laps did you complete this session?</p>
         </div>
+
+        {/* Notes */}
+        <div>
+          <label className="section-label block mb-2">
+            NOTES <span className="text-race-dim/40 normal-case tracking-normal font-sans font-normal">(optional)</span>
+          </label>
           <textarea
             value={formData.notes}
             onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
@@ -191,17 +203,19 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
           />
         </div>
 
+        {/* Submit error */}
         {errors.submit && (
           <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm font-mono">
             <AlertCircle size={14} />{errors.submit}
           </div>
         )}
 
+        {/* Submit button */}
         <button
           onClick={handleSubmit}
           disabled={submitting}
           className="w-full flex items-center justify-center gap-3 bg-neon-purple hover:bg-neon-purple-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-display font-bold text-lg tracking-widest py-4 rounded-lg transition-all duration-200"
-          style={{ boxShadow: submitting ? "none" : "0 0 30px rgba(184,79,255,0.3), 0 4px 20px rgba(0,0,0,0.4)" }}
+          style={{ boxShadow: submitting ? "none" : "0 0 30px rgba(184,79,255,0.3)" }}
         >
           {submitting ? (
             <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />SUBMITTING...</>
