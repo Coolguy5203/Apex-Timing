@@ -5,6 +5,7 @@ import type { LeaderboardEntry } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
 import { Zap } from "lucide-react";
+import Link from "next/link";
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
