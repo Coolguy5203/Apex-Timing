@@ -66,9 +66,9 @@ export function LeaderboardTable({ entries }: LeaderboardTableProps) {
               <div className="px-4 py-4">
                 <div className="flex items-center gap-2">
                   {entry.is_fastest && <Zap size={12} className="text-neon-purple flex-shrink-0" />}
-                  <span className="font-display font-bold text-race-text tracking-wide text-sm">
+                 <Link href={`/driver/${encodeURIComponent(entry.driver_name.toLowerCase().replace(/\s+/g, "-"))}`} className="font-display font-bold text-race-text tracking-wide text-sm hover:text-neon-purple transition-colors">
                     {entry.driver_name.toUpperCase()}
-                  </span>
+                  </Link>
                 </div>
                 <div className="md:hidden mt-0.5">
                   <span className="text-race-dim text-xs font-mono">{entry.car_name}</span>
