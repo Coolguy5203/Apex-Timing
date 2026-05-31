@@ -98,7 +98,7 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
       const s2 = parseLapTime(formData.sector_2);
       const s3 = parseLapTime(formData.sector_3);
 
-      const { error } = await supabase.from("lap_times").insert({
+      const { data: inserted, error } = await supabase.from("lap_times").insert({
         driver_id: userId,
         car_id: formData.car_id,
         track_id: formData.track_id,
@@ -112,8 +112,9 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         sector_1_ms: s1 ?? null,
         sector_2_ms: s2 ?? null,
         sector_3_ms: s3 ?? null,
-      });
+      }).select("id").single();
       if (error) throw error;
+      const newLapId = inserted?.id;
 
       const selectedCar = cars.find((c) => c.id === formData.car_id);
       const selectedTrack = tracks.find((t) => t.id === formData.track_id);
@@ -149,7 +150,10 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
       fetch("/api/achievements/check", { method: "POST" }).catch(() => {});
 
       setSuccess(true);
-      setTimeout(() => { router.push("/leaderboard"); router.refresh(); }, 2000);
+      setTimeout(() => {
+        router.push(newLapId ? `/recap/${newLapId}` : "/leaderboard");
+        router.refresh();
+      }, 1500);
     } catch (err: any) {
       setErrors({ submit: err.message || "Failed to submit. Try again." });
     } finally {
@@ -163,7 +167,7 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         <CheckCircle2 size={48} className="text-neon-green mx-auto mb-4" />
         <h3 className="font-display font-bold text-2xl text-race-text mb-2">LAP TIME POSTED</h3>
         <p className="text-race-dim font-mono text-sm">{previewTime}</p>
-        <p className="text-race-dim/60 font-mono text-xs mt-4">Redirecting to leaderboard...</p>
+        <p className="text-race-dim/60 font-mono text-xs mt-4">Loading your session recap...</p>
       </div>
     );
   }

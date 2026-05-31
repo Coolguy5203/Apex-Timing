@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield, Star, Settings, Target } from "lucide-react";
+import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield, Star, Settings, Target, Swords } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import clsx from "clsx";
 
@@ -46,6 +46,7 @@ export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
 
 const navLinks = [
     { href: "/leaderboard", label: "TIMES", icon: Trophy },
+    { href: "/compare",     label: "VS",    icon: Swords },
     { href: "/championship", label: "CHAMP", icon: Star },
     { href: "/teams", label: "TEAMS", icon: Users },
     { href: "/challenges", label: "CHALLENGES", icon: Target },

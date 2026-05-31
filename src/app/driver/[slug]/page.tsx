@@ -127,9 +127,17 @@ export default async function DriverPage({ params }: DriverPageProps) {
   return (
     <div className="grid-bg min-h-screen">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-        <Link href="/leaderboard" className="inline-flex items-center gap-2 text-race-dim hover:text-race-text text-xs font-mono mb-6 transition-colors">
-          <ChevronLeft size={14} />BACK TO LEADERBOARD
-        </Link>
+        <div className="flex items-center justify-between mb-6">
+          <Link href="/leaderboard" className="inline-flex items-center gap-2 text-race-dim hover:text-race-text text-xs font-mono transition-colors">
+            <ChevronLeft size={14} />BACK TO LEADERBOARD
+          </Link>
+          <Link
+            href={`/compare?a=${slug}`}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono text-neon-purple border border-neon-purple/30 hover:bg-neon-purple/10 rounded transition-all"
+          >
+            ⚔ COMPARE
+          </Link>
+        </div>
 
         <div className="race-card p-8 mb-8 relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
