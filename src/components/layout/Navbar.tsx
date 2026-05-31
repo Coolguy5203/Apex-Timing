@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield, Star, Settings } from "lucide-react";
+import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield, Star, Settings, Target } from "lucide-react";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import clsx from "clsx";
 
 interface NavbarProps {
@@ -48,6 +49,7 @@ const navLinks = [
     { href: "/leaderboard", label: "LEADERBOARD", icon: Trophy },
     { href: "/championship", label: "CHAMPIONSHIP", icon: Star },
     { href: "/teams", label: "TEAMS", icon: Users },
+    { href: "/challenges", label: "CHALLENGES", icon: Target },
     { href: "/submit", label: "SUBMIT LAP", icon: Flag },
     { href: "/pro", label: "⚡ PRO", icon: Zap },
   ];
@@ -79,6 +81,7 @@ const navLinks = [
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
+                <NotificationBell />
               <div className="flex items-center gap-2 px-3 py-1.5 bg-race-card border border-race-border rounded text-xs font-mono text-race-dim">
                   <User size={12} className="text-neon-purple" />
                   <span className="text-race-text max-w-[120px] truncate">{user.email?.split("@")[0]}</span>

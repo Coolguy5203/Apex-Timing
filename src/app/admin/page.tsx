@@ -16,7 +16,7 @@ export default async function AdminPage() {
 
   if (!profile?.is_admin) redirect("/");
 
-  const [usersRes, lapsRes, codesRes, seasonsRes] = await Promise.all([
+  const [usersRes, lapsRes, codesRes, seasonsRes, challengesRes, carsRes, tracksRes] = await Promise.all([
     supabase.from("users").select("*").order("created_at", { ascending: false }),
     supabase.from("lap_times").select(`
       id, lap_time_formatted, submitted_at, driver_id, validation_status, flag_reason,
@@ -26,6 +26,9 @@ export default async function AdminPage() {
     `).order("submitted_at", { ascending: false }),
     supabase.from("pro_codes").select("*").order("created_at", { ascending: false }),
     supabase.from("seasons").select("*").order("created_at", { ascending: false }),
+    supabase.from("challenges").select("*").order("start_date", { ascending: false }),
+    supabase.from("cars").select("id, name, class").order("name"),
+    supabase.from("tracks").select("id, name").order("name"),
   ]);
 
   return (
@@ -35,6 +38,9 @@ export default async function AdminPage() {
       lapTimes={lapsRes.data || []}
       proCodes={codesRes.data || []}
       seasons={seasonsRes.data || []}
+      challenges={challengesRes.data || []}
+      cars={carsRes.data || []}
+      tracks={tracksRes.data || []}
     />
   );
 }

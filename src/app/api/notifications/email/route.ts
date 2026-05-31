@@ -30,13 +30,14 @@ export async function POST(req: Request) {
     if (!beatenLaps || beatenLaps.length === 0) return NextResponse.json({ ok: true });
 
     // De-duplicate: only notify each driver once (their best lap comparison)
-    const bestPerDriver = new Map<string, { email: string; driverName: string; lapMs: number }>();
+    const bestPerDriver = new Map<string, { driverId: string; email: string; driverName: string; lapMs: number }>();
     for (const lap of beatenLaps) {
       const u = lap.users as any;
       if (!u?.email) continue;
       const existing = bestPerDriver.get(lap.driver_id);
       if (!existing || lap.lap_time_ms < existing.lapMs) {
         bestPerDriver.set(lap.driver_id, {
+          driverId: lap.driver_id,
           email: u.email,
           driverName: u.driver_name,
           lapMs: lap.lap_time_ms,
@@ -45,6 +46,18 @@ export async function POST(req: Request) {
     }
 
     if (bestPerDriver.size === 0) return NextResponse.json({ ok: true });
+
+    // Create in-app notifications for beaten drivers
+    const delta = (ms: number) => `+${((ms - lap_time_ms) / 1000).toFixed(3)}s`;
+    await supabase.from("notifications").insert(
+      Array.from(bestPerDriver.values()).map(({ driverId, driverName, lapMs }) => ({
+        user_id: driverId,
+        type: "LAP_BEATEN",
+        title: `Your lap at ${track_name} was beaten`,
+        message: `${driver_name} posted ${formatLapTime(lap_time_ms)} on the ${car_name} — ${delta(lapMs)} faster than you`,
+        data: { car_name, track_name, new_time_ms: lap_time_ms, your_time_ms: lapMs },
+      }))
+    );
 
     const resend = new Resend(apiKey);
     const fromAddress = process.env.RESEND_FROM_EMAIL || "APEX TIMING <notifications@apextiming.racing>";

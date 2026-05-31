@@ -8,6 +8,7 @@ import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag } fr
 import { LapTrends } from "@/components/driver/LapTrends";
 import { getStreakInfo } from "@/lib/supabase/queries";
 import { StreakDisplay } from "@/components/ui/StreakDisplay";
+import { AchievementGrid } from "@/components/achievements/AchievementGrid";
 
 interface DriverPageProps {
   params: Promise<{ slug: string }>;
@@ -63,6 +64,11 @@ async function getDriverData(slug: string) {
   }
   const favouriteTrack = Array.from(trackCounts.values()).sort((a, b) => b.count - a.count)[0];
 
+  const [achRes, allAchRes] = await Promise.all([
+    supabase.from("user_achievements").select("achievement_key, unlocked_at, achievements(key,name,description,icon,tier)").eq("user_id", driver.id).order("unlocked_at", { ascending: false }),
+    supabase.from("achievements").select("key,name,description,icon,tier").order("tier").order("name"),
+  ]);
+
   const pbsWithRank = await Promise.all(
     personalBests.map(async (pb) => {
       const car = pb.cars as any;
@@ -103,6 +109,8 @@ async function getDriverData(slug: string) {
     personalBests: pbsWithRank,
     recentActivity: allLaps.slice(0, 8),
     lapHistory,
+    userAchievements: achRes.data || [],
+    allAchievements: allAchRes.data || [],
     stats: { totalLaps, uniqueCars, uniqueTracks, overallBest, favouriteCar, favouriteTrack },
   };
 }
@@ -111,7 +119,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
   const { slug } = await params;
   const data = await getDriverData(slug);
   if (!data) notFound();
-  const { driver, personalBests, recentActivity, lapHistory, stats } = data;
+  const { driver, personalBests, recentActivity, lapHistory, stats, userAchievements, allAchievements } = data;
   const streak = await getStreakInfo(driver.id);
 
   return (
@@ -202,6 +210,15 @@ export default async function DriverPage({ params }: DriverPageProps) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {allAchievements.length > 0 && (
+          <div className="mb-6">
+            <AchievementGrid
+              userAchievements={userAchievements as any}
+              allAchievements={allAchievements as any}
+            />
           </div>
         )}
 

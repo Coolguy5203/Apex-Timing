@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck, Trophy, Calendar } from "lucide-react";
+import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck, Trophy, Calendar, Target } from "lucide-react";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
@@ -14,11 +14,14 @@ interface AdminDashboardProps {
   lapTimes: any[];
   proCodes: any[];
   seasons: any[];
+  challenges: any[];
+  cars: any[];
+  tracks: any[];
 }
 
-type Tab = "users" | "laps" | "codes" | "seasons";
+type Tab = "users" | "laps" | "codes" | "seasons" | "challenges";
 
-export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons }: AdminDashboardProps) {
+export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons, challenges, cars, tracks }: AdminDashboardProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("users");
   const [loading, setLoading] = useState<string | null>(null);
@@ -27,6 +30,8 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
   const [showNewCode, setShowNewCode] = useState(false);
   const [newSeason, setNewSeason] = useState({ name: "", start_date: "", end_date: "" });
   const [showNewSeason, setShowNewSeason] = useState(false);
+  const [newChallenge, setNewChallenge] = useState({ name: "", description: "", car_id: "", track_id: "", car_class: "", start_date: "", end_date: "", bonus_points: "5" });
+  const [showNewChallenge, setShowNewChallenge] = useState(false);
 
   const showMessage = (type: "success" | "error", text: string) => {
     setMessage({ type, text });
@@ -166,11 +171,49 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
     setLoading(null);
   };
 
+  const createChallenge = async () => {
+    if (!newChallenge.name || !newChallenge.start_date || !newChallenge.end_date) return;
+    if (!newChallenge.car_id && !newChallenge.car_class) { showMessage("error", "Choose a car or class"); return; }
+    if (!newChallenge.track_id) { showMessage("error", "Choose a track"); return; }
+    setLoading("new-challenge");
+    const supabase = createClient();
+    const { error } = await supabase.from("challenges").insert({
+      name: newChallenge.name.trim(),
+      description: newChallenge.description || null,
+      car_id: newChallenge.car_id || null,
+      track_id: newChallenge.track_id || null,
+      car_class: newChallenge.car_class || null,
+      start_date: newChallenge.start_date,
+      end_date: newChallenge.end_date,
+      bonus_points: parseInt(newChallenge.bonus_points) || 5,
+      created_by: currentUser.id,
+    });
+    if (error) showMessage("error", error.message);
+    else {
+      showMessage("success", "Challenge created!");
+      setNewChallenge({ name: "", description: "", car_id: "", track_id: "", car_class: "", start_date: "", end_date: "", bonus_points: "5" });
+      setShowNewChallenge(false);
+      router.refresh();
+    }
+    setLoading(null);
+  };
+
+  const deleteChallenge = async (id: string) => {
+    if (!confirm("Delete this challenge?")) return;
+    setLoading(`del-ch-${id}`);
+    const supabase = createClient();
+    const { error } = await supabase.from("challenges").delete().eq("id", id);
+    if (error) showMessage("error", error.message);
+    else { showMessage("success", "Challenge deleted"); router.refresh(); }
+    setLoading(null);
+  };
+
   const tabs: { id: Tab; label: string; icon: any; count: number }[] = [
-    { id: "users", label: "DRIVERS", icon: Users, count: users.length },
-    { id: "laps", label: "LAP TIMES", icon: Timer, count: lapTimes.length },
-    { id: "codes", label: "PRO CODES", icon: Key, count: proCodes.length },
-    { id: "seasons", label: "SEASONS", icon: Trophy, count: seasons.length },
+    { id: "users",      label: "DRIVERS",    icon: Users,   count: users.length      },
+    { id: "laps",       label: "LAP TIMES",  icon: Timer,   count: lapTimes.length   },
+    { id: "codes",      label: "PRO CODES",  icon: Key,     count: proCodes.length   },
+    { id: "seasons",    label: "SEASONS",    icon: Trophy,  count: seasons.length    },
+    { id: "challenges", label: "CHALLENGES", icon: Target,  count: challenges.length },
   ];
 
   return (
@@ -544,6 +587,113 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {tab === "challenges" && (
+          <div>
+            <div className="mb-4">
+              {!showNewChallenge ? (
+                <button
+                  onClick={() => setShowNewChallenge(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-neon-green/90 hover:bg-neon-green text-black text-xs font-mono font-bold tracking-widest rounded-lg transition-all"
+                >
+                  <Plus size={14} />CREATE CHALLENGE
+                </button>
+              ) : (
+                <div className="race-card p-5 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="section-label">NEW WEEKLY CHALLENGE</p>
+                    <button onClick={() => setShowNewChallenge(false)} className="text-race-dim hover:text-race-text"><X size={16} /></button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    <div className="md:col-span-2">
+                      <label className="section-label block mb-1">CHALLENGE NAME</label>
+                      <input type="text" value={newChallenge.name} onChange={(e) => setNewChallenge(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Spa GT3 Shootout" className="input-field" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="section-label block mb-1">DESCRIPTION (optional)</label>
+                      <input type="text" value={newChallenge.description} onChange={(e) => setNewChallenge(p => ({ ...p, description: e.target.value }))} placeholder="Fastest lap at Spa in any GT3 car" className="input-field" />
+                    </div>
+                    <div>
+                      <label className="section-label block mb-1">CAR (specific)</label>
+                      <select value={newChallenge.car_id} onChange={(e) => setNewChallenge(p => ({ ...p, car_id: e.target.value, car_class: "" }))} className="input-field">
+                        <option value="">— Any car —</option>
+                        {cars.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="section-label block mb-1">OR CAR CLASS</label>
+                      <select value={newChallenge.car_class} onChange={(e) => setNewChallenge(p => ({ ...p, car_class: e.target.value, car_id: "" }))} className="input-field">
+                        <option value="">— Any class —</option>
+                        {[...new Set(cars.map((c: any) => c.class).filter(Boolean))].map((cls: any) => <option key={cls} value={cls}>{cls}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="section-label block mb-1">TRACK</label>
+                      <select value={newChallenge.track_id} onChange={(e) => setNewChallenge(p => ({ ...p, track_id: e.target.value }))} className="input-field">
+                        <option value="">— Select track —</option>
+                        {tracks.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="section-label block mb-1">BONUS POINTS</label>
+                      <input type="number" value={newChallenge.bonus_points} onChange={(e) => setNewChallenge(p => ({ ...p, bonus_points: e.target.value }))} min="1" max="50" className="input-field" />
+                    </div>
+                    <div>
+                      <label className="section-label block mb-1">START DATE</label>
+                      <input type="date" value={newChallenge.start_date} onChange={(e) => setNewChallenge(p => ({ ...p, start_date: e.target.value }))} className="input-field" />
+                    </div>
+                    <div>
+                      <label className="section-label block mb-1">END DATE</label>
+                      <input type="date" value={newChallenge.end_date} onChange={(e) => setNewChallenge(p => ({ ...p, end_date: e.target.value }))} className="input-field" />
+                    </div>
+                  </div>
+                  <button
+                    onClick={createChallenge}
+                    disabled={loading === "new-challenge"}
+                    className="flex items-center gap-2 px-4 py-2 bg-neon-green/90 hover:bg-neon-green disabled:opacity-50 text-black text-xs font-mono font-bold tracking-widest rounded transition-all"
+                  >
+                    {loading === "new-challenge" ? "CREATING..." : <><Plus size={12} />CREATE CHALLENGE</>}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="race-card overflow-hidden">
+              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-0 border-b border-race-border bg-race-dark px-4 py-3">
+                {["CHALLENGE", "DATES", "BONUS PTS", "DELETE"].map((col) => (
+                  <div key={col} className="text-xs font-mono text-race-dim tracking-widest">{col}</div>
+                ))}
+              </div>
+              {challenges.length === 0 ? (
+                <div className="p-8 text-center text-race-dim font-mono text-sm">NO CHALLENGES YET</div>
+              ) : challenges.map((ch) => {
+                const today = new Date().toISOString().slice(0, 10);
+                const isActive = ch.start_date <= today && ch.end_date >= today;
+                return (
+                  <div key={ch.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-0 border-b border-race-border/40 items-center px-4 py-3 hover:bg-race-muted/30 transition-colors">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-race-text text-sm">{ch.name}</span>
+                        {isActive && <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-neon-green/10 text-neon-green border border-neon-green/20">LIVE</span>}
+                      </div>
+                      <span className="text-race-dim text-xs font-mono">{ch.description || "—"}</span>
+                    </div>
+                    <div className="px-4 text-xs font-mono text-race-dim">
+                      <div>{ch.start_date}</div>
+                      <div>{ch.end_date}</div>
+                    </div>
+                    <div className="px-4">
+                      <span className="text-neon-green font-mono font-bold text-sm">+{ch.bonus_points}</span>
+                    </div>
+                    <button onClick={() => deleteChallenge(ch.id)} disabled={!!loading} className="p-2 text-race-dim hover:text-red-400 transition-colors">
+                      {loading === `del-ch-${ch.id}` ? "..." : <Trash2 size={14} />}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

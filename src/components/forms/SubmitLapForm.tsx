@@ -26,6 +26,9 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
     lap_time: "",
     notes: "",
     laps_in_session: "",
+    sector_1: "",
+    sector_2: "",
+    sector_3: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -86,6 +89,10 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
       const trackRecordMs = trRes.data?.lap_time_ms ?? null;
       const flagReason = checkLapSuspicious(lap_time_ms, personalBestMs, trackRecordMs);
 
+      const s1 = parseLapTime(formData.sector_1);
+      const s2 = parseLapTime(formData.sector_2);
+      const s3 = parseLapTime(formData.sector_3);
+
       const { error } = await supabase.from("lap_times").insert({
         driver_id: userId,
         car_id: formData.car_id,
@@ -97,6 +104,9 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         submitted_at: new Date().toISOString(),
         validation_status: flagReason ? "flagged" : "valid",
         flag_reason: flagReason ?? null,
+        sector_1_ms: s1 ?? null,
+        sector_2_ms: s2 ?? null,
+        sector_3_ms: s3 ?? null,
       });
       if (error) throw error;
 
@@ -129,8 +139,9 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         }),
       }).catch(() => {});
 
-      // Check if this lap hit a streak milestone → may award a shield
-      fetch("/api/streak/milestone", { method: "POST" }).catch(() => {});
+      // Check streak milestone and achievements (fire-and-forget)
+      fetch("/api/streak/milestone",   { method: "POST" }).catch(() => {});
+      fetch("/api/achievements/check", { method: "POST" }).catch(() => {});
 
       setSuccess(true);
       setTimeout(() => { router.push("/leaderboard"); router.refresh(); }, 2000);
@@ -206,6 +217,31 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
               <AlertCircle size={10} />{errors.lap_time}
             </p>
           )}
+        </div>
+
+        {/* Sector times */}
+        <div>
+          <label className="section-label block mb-2">
+            SECTOR TIMES <span className="text-race-dim/40 normal-case tracking-normal font-sans font-normal">(optional)</span>
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {(["sector_1", "sector_2", "sector_3"] as const).map((key, i) => {
+              const ms = parseLapTime(formData[key]);
+              return (
+                <div key={key} className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-race-dim/50 text-[10px] font-mono pointer-events-none">S{i + 1}</div>
+                  <input
+                    type="text"
+                    value={formData[key]}
+                    onChange={(e) => setFormData((p) => ({ ...p, [key]: e.target.value }))}
+                    placeholder="0:00.000"
+                    className={`input-field pl-7 text-sm font-mono tracking-wider ${ms !== null ? "border-neon-green/30" : ""}`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-race-dim/60 text-xs font-mono mt-1.5">Split times for S1 / S2 / S3 — same format as lap time</p>
         </div>
 
         {/* Preview */}
