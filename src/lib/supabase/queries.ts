@@ -55,6 +55,7 @@ export async function getLeaderboard(
       tracks!inner(id, name)
     `
     )
+    .neq("validation_status", "flagged")
     .order("lap_time_ms", { ascending: true });
 
   if (carId) query = query.eq("car_id", carId);
@@ -233,7 +234,8 @@ export async function getChampionshipStandings(seasonId: string) {
     .from("lap_times")
     .select("driver_id, car_id, track_id, lap_time_ms, users(driver_name, team_name)")
     .gte("submitted_at", season.start_date)
-    .lte("submitted_at", season.end_date + "T23:59:59Z");
+    .lte("submitted_at", season.end_date + "T23:59:59Z")
+    .neq("validation_status", "flagged");
 
   if (!laps || laps.length === 0) return { season, standings: [] };
 

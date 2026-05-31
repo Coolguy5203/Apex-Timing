@@ -19,7 +19,7 @@ export async function computeAllRatings(): Promise<DriverRating[]> {
   const { data: laps } = await supabase
     .from("lap_times")
     .select("driver_id, car_id, track_id, lap_time_ms, users(driver_name)")
-    .eq("validation_status", "valid");
+    .neq("validation_status", "flagged");
 
   if (!laps || laps.length === 0) return [];
 

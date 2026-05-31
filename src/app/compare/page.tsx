@@ -19,8 +19,8 @@ async function getCompareData(slugA: string | undefined, slugB: string | undefin
 
   // Fetch all laps for both drivers
   const [{ data: lapsA }, { data: lapsB }] = await Promise.all([
-    supabase.from("lap_times").select("car_id, track_id, lap_time_ms, lap_time_formatted, cars(name, class), tracks(name, country)").eq("driver_id", driverA.id),
-    supabase.from("lap_times").select("car_id, track_id, lap_time_ms, lap_time_formatted, cars(name, class), tracks(name, country)").eq("driver_id", driverB.id),
+    supabase.from("lap_times").select("car_id, track_id, lap_time_ms, lap_time_formatted, cars(name, class), tracks(name, country)").eq("driver_id", driverA.id).neq("validation_status", "flagged"),
+    supabase.from("lap_times").select("car_id, track_id, lap_time_ms, lap_time_formatted, cars(name, class), tracks(name, country)").eq("driver_id", driverB.id).neq("validation_status", "flagged"),
   ]);
 
   // Best per combo for each driver

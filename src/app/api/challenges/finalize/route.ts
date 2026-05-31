@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     .select("driver_id, lap_time_ms, users(driver_name)")
     .gte("submitted_at", challenge.start_date)
     .lte("submitted_at", challenge.end_date + "T23:59:59Z")
-    .eq("validation_status", "approved")
+    .neq("validation_status", "flagged")
     .order("lap_time_ms", { ascending: true });
 
   if (challenge.car_id)    query = query.eq("car_id", challenge.car_id);

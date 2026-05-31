@@ -4,11 +4,11 @@ export function checkLapSuspicious(
   personalBestMs: number | null,
   trackRecordMs: number | null
 ): string | null {
-  if (personalBestMs !== null && newLapMs < personalBestMs * 0.92) {
+  if (personalBestMs !== null && newLapMs < personalBestMs * 0.95) {
     const pct = (((personalBestMs - newLapMs) / personalBestMs) * 100).toFixed(1);
     return `${pct}% faster than personal best`;
   }
-  if (trackRecordMs !== null && newLapMs < trackRecordMs) {
+  if (trackRecordMs !== null && newLapMs < trackRecordMs * 0.98) {
     return "Faster than current track record";
   }
   return null;

@@ -80,6 +80,7 @@ async function getDriverData(slug: string) {
         .select("driver_id")
         .eq("car_id", car.id)
         .eq("track_id", track.id)
+        .neq("validation_status", "flagged")
         .lt("lap_time_ms", pb.lap_time_ms);
       const uniqueFasterDrivers = new Set((faster || []).map((f) => f.driver_id)).size;
       const { data: p1Data } = await supabase
@@ -87,6 +88,7 @@ async function getDriverData(slug: string) {
         .select("lap_time_ms")
         .eq("car_id", car.id)
         .eq("track_id", track.id)
+        .neq("validation_status", "flagged")
         .order("lap_time_ms", { ascending: true })
         .limit(1)
         .single();
