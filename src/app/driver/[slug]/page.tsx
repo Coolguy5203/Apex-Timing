@@ -4,8 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag } from "lucide-react";
+import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag, Flame } from "lucide-react";
 import { LapTrends } from "@/components/driver/LapTrends";
+import { getDriverStreak } from "@/lib/supabase/queries";
 
 interface DriverPageProps {
   params: Promise<{ slug: string }>;
@@ -110,6 +111,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
   const data = await getDriverData(slug);
   if (!data) notFound();
   const { driver, personalBests, recentActivity, lapHistory, stats } = data;
+  const streak = await getDriverStreak(driver.id);
 
   return (
     <div className="grid-bg min-h-screen">
@@ -135,7 +137,14 @@ export default async function DriverPage({ params }: DriverPageProps) {
                   </span>
                 )}
               </div>
-              {driver.team_name && <div className="mb-3"><Badge variant="muted" size="md">{driver.team_name.toUpperCase()}</Badge></div>}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {driver.team_name && <Badge variant="muted" size="md">{driver.team_name.toUpperCase()}</Badge>}
+                {streak.current >= 2 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono font-bold border border-orange-500/30 bg-orange-500/10 text-orange-400">
+                    <Flame size={11} />{streak.current} DAY STREAK
+                  </span>
+                )}
+              </div>
               <div className="flex flex-wrap gap-4 text-xs font-mono text-race-dim">
                 <span className="flex items-center gap-1"><Calendar size={11} />JOINED {new Date(driver.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase()}</span>
                 {stats.totalLaps > 0 && <span className="flex items-center gap-1"><Timer size={11} />LAST ACTIVE {formatRelativeTime(data.allLaps[0]?.submitted_at || driver.created_at)}</span>}
@@ -151,7 +160,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {[
             { label: "TOTAL LAPS", value: stats.totalLaps, icon: Flag, color: "text-gradient-purple" },
             { label: "CARS DRIVEN", value: stats.uniqueCars, icon: Car, color: "text-gradient-purple" },
@@ -170,6 +179,24 @@ export default async function DriverPage({ params }: DriverPageProps) {
               </div>
             </div>
           ))}
+          {/* Streak card */}
+          <div className={`race-card p-5 relative overflow-hidden ${streak.current >= 3 ? "border-orange-500/40" : ""}`}>
+            {streak.current >= 3 && <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-transparent pointer-events-none" />}
+            <div className="flex items-start justify-between relative">
+              <div>
+                <p className="section-label mb-2">STREAK</p>
+                <p className={`font-display font-black text-3xl md:text-4xl ${streak.current >= 3 ? "text-orange-400" : "text-race-text"}`}>
+                  {streak.current}
+                </p>
+                {streak.longest > 0 && (
+                  <p className="text-race-dim/60 text-xs font-mono mt-1">BEST {streak.longest}</p>
+                )}
+              </div>
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center border ${streak.current >= 3 ? "bg-orange-500/10 border-orange-500/30" : "bg-neon-purple-glow border-neon-purple/20"}`}>
+                <Flame size={16} className={streak.current >= 3 ? "text-orange-400" : "text-race-dim"} />
+              </div>
+            </div>
+          </div>
         </div>
 
         {(stats.favouriteCar || stats.favouriteTrack) && (

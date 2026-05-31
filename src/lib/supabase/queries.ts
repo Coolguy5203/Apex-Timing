@@ -295,6 +295,138 @@ export async function getChampionshipStandings(seasonId: string) {
   return { season, standings };
 }
 
+// ── Streak helpers ──────────────────────────────────────────────────────────
+
+function calcStreaks(submittedDates: string[]): { current: number; longest: number } {
+  if (submittedDates.length === 0) return { current: 0, longest: 0 };
+
+  // Unique calendar dates (UTC), sorted ascending
+  const uniqueDates = [...new Set(submittedDates.map((d) => d.slice(0, 10)))].sort();
+
+  // Longest streak
+  let longest = 1;
+  let run = 1;
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prev = new Date(uniqueDates[i - 1]);
+    prev.setUTCDate(prev.getUTCDate() + 1);
+    if (prev.toISOString().slice(0, 10) === uniqueDates[i]) {
+      run++;
+      if (run > longest) longest = run;
+    } else {
+      run = 1;
+    }
+  }
+
+  // Current streak — must include today or yesterday to be "active"
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  const last = uniqueDates[uniqueDates.length - 1];
+
+  let current = 0;
+  if (last === today || last === yesterday) {
+    current = 1;
+    let anchor = last;
+    for (let i = uniqueDates.length - 2; i >= 0; i--) {
+      const expected = new Date(anchor);
+      expected.setUTCDate(expected.getUTCDate() - 1);
+      const exp = expected.toISOString().slice(0, 10);
+      if (uniqueDates[i] === exp) { current++; anchor = exp; } else break;
+    }
+  }
+
+  return { current, longest };
+}
+
+export async function getDriverStreak(driverId: string): Promise<{ current: number; longest: number }> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("lap_times")
+    .select("submitted_at")
+    .eq("driver_id", driverId)
+    .order("submitted_at", { ascending: true });
+  return calcStreaks((data || []).map((r) => r.submitted_at));
+}
+
+// ── Team standings ───────────────────────────────────────────────────────────
+
+export async function getTeamStandings() {
+  const supabase = await createClient();
+
+  // All users with a team
+  const { data: users } = await supabase
+    .from("users")
+    .select("id, driver_name, team_name")
+    .not("team_name", "is", null);
+
+  if (!users || users.length === 0) return [];
+
+  // All laps (we need to aggregate per team)
+  const { data: laps } = await supabase
+    .from("lap_times")
+    .select("driver_id, lap_time_ms, lap_time_formatted, submitted_at");
+
+  const allLaps = laps || [];
+
+  // Group users by team
+  const teamMap = new Map<string, { members: typeof users; totalLaps: number; bestLapMs: number | null; bestLapFormatted: string | null }>();
+  for (const user of users) {
+    const t = user.team_name!;
+    if (!teamMap.has(t)) teamMap.set(t, { members: [], totalLaps: 0, bestLapMs: null, bestLapFormatted: null });
+    teamMap.get(t)!.members.push(user);
+  }
+
+  // Accumulate laps per team
+  const memberIdToTeam = new Map(users.map((u) => [u.id, u.team_name!]));
+  for (const lap of allLaps) {
+    const team = memberIdToTeam.get(lap.driver_id);
+    if (!team || !teamMap.has(team)) continue;
+    const entry = teamMap.get(team)!;
+    entry.totalLaps++;
+    if (entry.bestLapMs === null || lap.lap_time_ms < entry.bestLapMs) {
+      entry.bestLapMs = lap.lap_time_ms;
+      entry.bestLapFormatted = lap.lap_time_formatted;
+    }
+  }
+
+  return Array.from(teamMap.entries())
+    .map(([name, data]) => ({
+      team_name: name,
+      member_count: data.members.length,
+      total_laps: data.totalLaps,
+      best_lap_ms: data.bestLapMs,
+      best_lap_formatted: data.bestLapFormatted,
+    }))
+    .sort((a, b) => b.total_laps - a.total_laps);
+}
+
+export async function getTeamChampionshipStandings(seasonId: string) {
+  const { season, standings: driverStandings } = await getChampionshipStandings(seasonId);
+  if (!season) return { season: null, teamStandings: [] };
+
+  // Sum individual driver points by team
+  const teamMap = new Map<string, { points: number; wins: number; podiums: number; memberCount: number; drivers: string[] }>();
+  for (const d of driverStandings) {
+    if (!d.teamName) continue;
+    const existing = teamMap.get(d.teamName);
+    if (existing) {
+      existing.points += d.points;
+      existing.wins += d.wins;
+      existing.podiums += d.podiums;
+      existing.memberCount++;
+      existing.drivers.push(d.driverName);
+    } else {
+      teamMap.set(d.teamName, { points: d.points, wins: d.wins, podiums: d.podiums, memberCount: 1, drivers: [d.driverName] });
+    }
+  }
+
+  const teamStandings = Array.from(teamMap.entries())
+    .map(([name, data], i) => ({ rank: i + 1, team_name: name, ...data }))
+    .sort((a, b) => b.points - a.points || b.wins - a.wins)
+    .map((t, i) => ({ ...t, rank: i + 1 }));
+
+  return { season, teamStandings };
+}
+
 export async function getDashboardStats() {
   const supabase = await createClient();
 

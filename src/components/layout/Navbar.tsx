@@ -47,7 +47,7 @@ const navLinks = [
     { href: "/", label: "DASHBOARD", icon: Timer },
     { href: "/leaderboard", label: "LEADERBOARD", icon: Trophy },
     { href: "/championship", label: "CHAMPIONSHIP", icon: Star },
-    { href: "/team", label: "TEAM", icon: Users },
+    { href: "/teams", label: "TEAMS", icon: Users },
     { href: "/submit", label: "SUBMIT LAP", icon: Flag },
     { href: "/pro", label: "⚡ PRO", icon: Zap },
   ];

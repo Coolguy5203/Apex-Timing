@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatLapTime, formatRelativeTime } from "@/utils/lapTime";
-import { Timer, Trophy, Zap, ChevronRight, TrendingDown } from "lucide-react";
+import { getDriverStreak } from "@/lib/supabase/queries";
+import { Timer, Trophy, Zap, ChevronRight, TrendingDown, Flame } from "lucide-react";
 import Link from "next/link";
 
 interface PersonalDashboardProps {
@@ -12,7 +13,7 @@ interface PersonalDashboardProps {
 export async function PersonalDashboard({ userId, driverName, driverSlug }: PersonalDashboardProps) {
   const supabase = await createClient();
 
-  const [recentRes, allLapsRes] = await Promise.all([
+  const [recentRes, allLapsRes, streak] = await Promise.all([
     // Recent 5 laps
     supabase
       .from("lap_times")
@@ -25,6 +26,8 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
       .from("lap_times")
       .select("lap_time_ms, car_id, track_id, cars(name, class), tracks(name)")
       .eq("driver_id", userId),
+    // Streak
+    getDriverStreak(userId),
   ]);
 
   const recentLaps = recentRes.data || [];
@@ -61,7 +64,7 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
             </h2>
           </div>
           <p className="text-race-dim font-mono text-xs">You haven't posted any lap times yet.</p>
-          <Link href="/submit" className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-neon-purple hover:bg-neon-purple-dark text-white text-xs font-mono font-bold tracking-widest rounded-lg transition-all">
+          <Link href="/submit" className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-neon-purple hover:bg-neon-purple-dark text-white text-xs font-mono font-bold tracking-widest rounded-lg transition-all" style={{ boxShadow: "0 0 20px rgba(184,79,255,0.3)" }}>
             POST YOUR FIRST LAP
           </Link>
         </div>
@@ -87,7 +90,7 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="race-card p-4 text-center">
           <Timer size={16} className="text-neon-purple mx-auto mb-1.5" />
           <p className="font-display font-black text-2xl text-race-text">{totalLaps}</p>
@@ -95,9 +98,7 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
         </div>
         <div className="race-card p-4 text-center">
           <Trophy size={16} className="text-neon-purple mx-auto mb-1.5" />
-          <p className="font-display font-black text-lg text-race-text">
-            {pbMap.size}
-          </p>
+          <p className="font-display font-black text-2xl text-race-text">{pbMap.size}</p>
           <p className="text-race-dim text-xs font-mono mt-0.5">COMBOS</p>
         </div>
         <div className="race-card p-4 text-center">
@@ -106,6 +107,21 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
             {overallBest ? formatLapTime(overallBest.lap_time_ms) : "—"}
           </p>
           <p className="text-race-dim text-xs font-mono mt-0.5">BEST LAP</p>
+        </div>
+        <div className={`race-card p-4 text-center relative overflow-hidden ${streak.current >= 3 ? "border-orange-500/40" : ""}`}>
+          {streak.current >= 3 && (
+            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-transparent pointer-events-none" />
+          )}
+          <Flame size={16} className={`mx-auto mb-1.5 ${streak.current >= 3 ? "text-orange-400" : "text-race-dim"}`} />
+          <p className={`font-display font-black text-2xl ${streak.current >= 3 ? "text-orange-400" : "text-race-text"}`}>
+            {streak.current}
+          </p>
+          <p className="text-race-dim text-xs font-mono mt-0.5">
+            DAY STREAK
+            {streak.current === 0 && streak.longest > 0 && (
+              <span className="block text-race-dim/50 text-[10px]">BEST: {streak.longest}</span>
+            )}
+          </p>
         </div>
       </div>
 
