@@ -45,13 +45,11 @@ export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
   };
 
 const navLinks = [
-    { href: "/", label: "DASHBOARD", icon: Timer },
-    { href: "/leaderboard", label: "LEADERBOARD", icon: Trophy },
-    { href: "/championship", label: "CHAMPIONSHIP", icon: Star },
+    { href: "/leaderboard", label: "TIMES", icon: Trophy },
+    { href: "/championship", label: "CHAMP", icon: Star },
     { href: "/teams", label: "TEAMS", icon: Users },
     { href: "/challenges", label: "CHALLENGES", icon: Target },
-    { href: "/submit", label: "SUBMIT LAP", icon: Flag },
-    { href: "/pro", label: "⚡ PRO", icon: Zap },
+    { href: "/submit", label: "SUBMIT", icon: Flag },
   ];
 
   return (
@@ -72,7 +70,7 @@ const navLinks = [
 
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map(({ href, label, icon: Icon }) => (
-              <Link key={href} href={href} className={clsx("flex items-center gap-2 px-4 py-2 rounded text-xs font-mono font-medium tracking-widest transition-all duration-200", pathname === href ? "text-neon-purple bg-neon-purple-glow border border-neon-purple/30" : "text-race-dim hover:text-race-text hover:bg-race-muted")}>
+              <Link key={href} href={href} className={clsx("flex items-center gap-1.5 px-3 py-2 rounded text-xs font-mono font-medium tracking-widest transition-all duration-200", pathname === href ? "text-neon-purple bg-neon-purple-glow border border-neon-purple/30" : "text-race-dim hover:text-race-text hover:bg-race-muted")}>
                 <Icon size={14} />{label}
               </Link>
             ))}
@@ -80,7 +78,10 @@ const navLinks = [
 
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Link href="/pro" className={clsx("flex items-center gap-1 px-3 py-1.5 text-xs font-mono rounded transition-all", pathname === "/pro" ? "text-neon-purple bg-neon-purple-glow border border-neon-purple/30" : "text-race-dim hover:text-race-text hover:bg-race-muted border border-transparent")}>
+                  <Zap size={12} className="text-yellow-400" />PRO
+                </Link>
                 <NotificationBell />
               <div className="flex items-center gap-2 px-3 py-1.5 bg-race-card border border-race-border rounded text-xs font-mono text-race-dim">
                   <User size={12} className="text-neon-purple" />
@@ -99,9 +100,14 @@ const navLinks = [
                 </button>
               </div>
             ) : (
-              <Link href="/auth" className="flex items-center gap-2 px-4 py-2 bg-neon-purple hover:bg-neon-purple-dark text-white text-xs font-mono font-medium tracking-widest rounded transition-all duration-200" style={{ boxShadow: "0 0 20px rgba(184,79,255,0.3)" }}>
-                <LogIn size={14} />SIGN IN
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href="/pro" className="flex items-center gap-1 px-3 py-1.5 text-xs font-mono text-race-dim hover:text-race-text border border-transparent hover:bg-race-muted rounded transition-all">
+                  <Zap size={12} className="text-yellow-400" />PRO
+                </Link>
+                <Link href="/auth" className="flex items-center gap-2 px-4 py-2 bg-neon-purple hover:bg-neon-purple-dark text-white text-xs font-mono font-medium tracking-widest rounded transition-all duration-200" style={{ boxShadow: "0 0 20px rgba(184,79,255,0.3)" }}>
+                  <LogIn size={14} />SIGN IN
+                </Link>
+              </div>
             )}
           </div>
 
