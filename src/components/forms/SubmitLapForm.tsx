@@ -145,6 +145,17 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         }),
       }).catch(() => {});
 
+      // Notify driver if their lap was flagged
+      if (flagReason) {
+        supabase.from("notifications").insert({
+          user_id: userId,
+          type: "LAP_FLAGGED",
+          title: "Lap Under Review",
+          message: `Your ${formatLapTime(lap_time_ms)} on ${selectedCar?.name ?? "?"} at ${selectedTrack?.name ?? "?"} was flagged for review. Reason: ${flagReason}. It won't appear in rankings until an admin approves it.`,
+          data: { lap_id: newLapId, flag_reason: flagReason },
+        }).then(() => {});
+      }
+
       // Check streak milestone and achievements (fire-and-forget)
       fetch("/api/streak/milestone",   { method: "POST" }).catch(() => {});
       fetch("/api/achievements/check", { method: "POST" }).catch(() => {});

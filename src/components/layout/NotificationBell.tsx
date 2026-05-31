@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, Trophy, Zap, Flame, Target, X, CheckCheck } from "lucide-react";
+import { Bell, Trophy, Zap, Flame, Target, X, CheckCheck, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { formatRelativeTime } from "@/utils/lapTime";
 
@@ -26,6 +26,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; color: string }> = {
   H2H_WIN:              { icon: <Trophy size={14} />, color: "text-neon-green" },
   H2H_LOSS:             { icon: <Zap size={14} />,    color: "text-race-dim" },
   CHALLENGE_WIN:        { icon: <Trophy size={14} />, color: "text-neon-green" },
+  LAP_FLAGGED:          { icon: <AlertTriangle size={14} />, color: "text-yellow-400" },
 };
 
 export function NotificationBell() {

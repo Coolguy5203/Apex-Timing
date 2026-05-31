@@ -36,14 +36,18 @@ export default async function RootLayout({
 
   let isAdmin = false;
   let isPro = false;
+  let driverSlug: string | undefined;
   if (user) {
     const { data: profile } = await supabase
       .from("users")
-      .select("is_admin, is_pro")
+      .select("is_admin, is_pro, driver_name")
       .eq("id", user.id)
       .single();
     isAdmin = profile?.is_admin ?? false;
     isPro = profile?.is_pro ?? false;
+    if (profile?.driver_name) {
+      driverSlug = profile.driver_name.toLowerCase().replace(/\s+/g, "-");
+    }
   }
 
   return (
@@ -55,7 +59,7 @@ export default async function RootLayout({
         </div>
         <div className="relative z-10">
           <LiveTicker />
-          <Navbar isAdmin={isAdmin} isPro={isPro} />
+          <Navbar isAdmin={isAdmin} isPro={isPro} driverSlug={driverSlug} />
           <main className="min-h-screen">{children}</main>
           <footer className="border-t border-race-border mt-20 py-8 px-6">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">

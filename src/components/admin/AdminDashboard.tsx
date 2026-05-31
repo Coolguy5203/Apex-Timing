@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck, Trophy, Calendar, Target, Swords } from "lucide-react";
+import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck, Trophy, Calendar, Target, Swords, Flag } from "lucide-react";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
@@ -20,11 +20,12 @@ interface AdminDashboardProps {
   tracks: any[];
 }
 
-type Tab = "users" | "laps" | "codes" | "seasons" | "challenges" | "h2h";
+type Tab = "review" | "users" | "laps" | "codes" | "seasons" | "challenges" | "h2h";
 
 export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons, challenges, h2hEvents, cars, tracks }: AdminDashboardProps) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("users");
+  const flaggedLaps = lapTimes.filter((l: any) => l.validation_status === "flagged");
+  const [tab, setTab] = useState<Tab>(flaggedLaps.length > 0 ? "review" : "users");
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [newCode, setNewCode] = useState({ code: "", description: "", max_uses: "" });
@@ -210,7 +211,10 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
     setLoading(null);
   };
 
-  const tabs: { id: Tab; label: string; icon: any; count: number }[] = [
+  const flaggedCount = flaggedLaps.length;
+
+  const tabs: { id: Tab; label: string; icon: any; count: number; urgent?: boolean }[] = [
+    { id: "review",     label: "REVIEW",     icon: Flag,    count: flaggedCount,      urgent: flaggedCount > 0 },
     { id: "users",      label: "DRIVERS",    icon: Users,   count: users.length      },
     { id: "laps",       label: "LAPS",       icon: Timer,   count: lapTimes.length   },
     { id: "codes",      label: "CODES",      icon: Key,     count: proCodes.length   },
@@ -218,8 +222,6 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
     { id: "challenges", label: "CHALLENGES", icon: Target,  count: challenges.length },
     { id: "h2h",        label: "H2H",        icon: Swords,  count: h2hEvents.length  },
   ];
-
-  const flaggedCount = lapTimes.filter((l: any) => l.validation_status === "flagged").length;
 
   return (
     <div className="grid-bg min-h-screen">
@@ -273,25 +275,92 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
         {/* Tabs — horizontally scrollable on mobile */}
         <div className="overflow-x-auto mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="flex gap-1 bg-race-card border border-race-border rounded-lg p-1 min-w-max sm:min-w-0">
-            {tabs.map(({ id, label, icon: Icon, count }) => (
+            {tabs.map(({ id, label, icon: Icon, count, urgent }) => (
               <button
                 key={id}
                 onClick={() => setTab(id)}
                 className={clsx(
                   "flex items-center gap-1.5 px-3 py-2 rounded text-xs font-mono font-medium tracking-widest transition-all whitespace-nowrap",
-                  tab === id ? "bg-neon-purple text-white" : "text-race-dim hover:text-race-text"
+                  tab === id
+                    ? urgent ? "bg-yellow-500 text-black" : "bg-neon-purple text-white"
+                    : urgent ? "text-yellow-400 hover:text-yellow-300" : "text-race-dim hover:text-race-text"
                 )}
               >
                 <Icon size={12} />
                 <span className="hidden sm:inline">{label}</span>
                 <span className="sm:hidden">{label.slice(0, 4)}</span>
-                <span className={clsx("px-1.5 py-0.5 rounded text-[10px]", tab === id ? "bg-white/20" : "bg-race-muted")}>
+                <span className={clsx(
+                  "px-1.5 py-0.5 rounded text-[10px]",
+                  tab === id ? "bg-white/20" : urgent ? "bg-yellow-400/20 text-yellow-400" : "bg-race-muted"
+                )}>
                   {count}
                 </span>
               </button>
             ))}
           </div>
         </div>
+
+        {/* ── REVIEW TAB ── */}
+        {tab === "review" && (
+          <div>
+            {flaggedLaps.length === 0 ? (
+              <div className="race-card p-12 text-center">
+                <CheckCheck size={36} className="text-neon-green mx-auto mb-3" />
+                <p className="font-display font-bold text-race-text tracking-widest mb-1">ALL CLEAR</p>
+                <p className="text-race-dim text-xs font-mono">No laps waiting for review.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-yellow-400 text-xs font-mono tracking-widest flex items-center gap-2">
+                  <AlertTriangle size={12} />{flaggedLaps.length} LAP{flaggedLaps.length !== 1 ? "S" : ""} AWAITING REVIEW — hidden from all rankings until approved
+                </p>
+                {flaggedLaps.map((lap: any) => (
+                  <div key={lap.id} className="race-card p-4 border-yellow-400/20 bg-yellow-400/5">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="font-display font-bold text-race-text tracking-wide">
+                            {lap.users?.driver_name?.toUpperCase() ?? "UNKNOWN"}
+                          </span>
+                          {lap.users?.team_name && (
+                            <span className="text-race-dim text-xs font-mono">{lap.users.team_name}</span>
+                          )}
+                          <span className="font-mono font-bold text-neon-purple text-sm">{lap.lap_time_formatted}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-3 text-xs font-mono text-race-dim mb-2">
+                          <span>{lap.cars?.name ?? "?"}</span>
+                          <span>@</span>
+                          <span>{lap.tracks?.name ?? "?"}</span>
+                          <span className="text-race-dim/60">{new Date(lap.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 px-3 py-2 bg-yellow-400/10 border border-yellow-400/20 rounded text-xs font-mono text-yellow-300">
+                          <AlertTriangle size={11} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+                          <span><span className="font-bold text-yellow-400">FLAG REASON:</span> {lap.flag_reason}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => approveLap(lap.id)}
+                          disabled={loading === `approve-${lap.id}`}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-neon-green/10 hover:bg-neon-green/20 border border-neon-green/30 text-neon-green text-xs font-mono font-bold rounded transition-all disabled:opacity-50"
+                        >
+                          <Check size={12} />{loading === `approve-${lap.id}` ? "..." : "APPROVE"}
+                        </button>
+                        <button
+                          onClick={() => deleteLap(lap.id)}
+                          disabled={loading === lap.id}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-mono font-bold rounded transition-all disabled:opacity-50"
+                        >
+                          <Trash2 size={12} />{loading === lap.id ? "..." : "DELETE"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── USERS TAB ── */}
         {tab === "users" && (

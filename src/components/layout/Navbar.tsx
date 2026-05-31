@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   Trophy, Flag, LogIn, LogOut, Menu, X, User, Users,
-  Zap, Shield, Star, Settings, Target, Swords, Medal, ChevronDown, Award
+  Zap, Shield, Star, Settings, Target, Swords, Medal, ChevronDown, Award, Search
 } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import clsx from "clsx";
@@ -14,6 +14,7 @@ import clsx from "clsx";
 interface NavbarProps {
   isAdmin?: boolean;
   isPro?: boolean;
+  driverSlug?: string;
 }
 
 const navLinks = [
@@ -27,7 +28,7 @@ const navLinks = [
   { href: "/submit",        label: "SUBMIT",       icon: Flag    },
 ];
 
-export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
+export function Navbar({ isAdmin = false, isPro = false, driverSlug }: NavbarProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -114,6 +115,18 @@ export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
             })}
           </div>
 
+          {/* Search */}
+          <Link
+            href="/search"
+            title="SEARCH"
+            className={clsx(
+              "hidden md:flex items-center justify-center w-9 h-9 rounded transition-all duration-200",
+              "text-race-dim hover:text-race-text hover:bg-race-muted"
+            )}
+          >
+            <Search size={15} />
+          </Link>
+
           {/* Right controls */}
           <div className="hidden md:flex items-center gap-1.5">
             {user ? (
@@ -151,6 +164,15 @@ export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
                       className="absolute right-0 top-10 w-44 rounded-xl border border-race-border shadow-2xl z-50 overflow-hidden py-1"
                       style={{ background: "#0f0f18", boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(184,79,255,0.1)" }}
                     >
+                      {driverSlug && (
+                        <Link
+                          href={`/driver/${driverSlug}`}
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-mono text-race-dim hover:text-race-text hover:bg-race-muted transition-colors"
+                        >
+                          <User size={12} />MY PROFILE
+                        </Link>
+                      )}
                       <Link
                         href="/settings"
                         onClick={() => setUserMenuOpen(false)}
@@ -225,11 +247,28 @@ export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
                 <Icon size={16} />{label}
               </Link>
             ))}
+            <Link
+              href="/search"
+              onClick={() => setMobileOpen(false)}
+              className={clsx(
+                "flex items-center gap-3 px-4 py-3 rounded text-sm font-mono tracking-wider transition-all",
+                pathname === "/search"
+                  ? "text-neon-purple bg-neon-purple-glow"
+                  : "text-race-dim hover:text-race-text hover:bg-race-muted"
+              )}
+            >
+              <Search size={16} />SEARCH
+            </Link>
 
             <div className="pt-3 border-t border-race-border mt-3 space-y-1">
               {user ? (
                 <>
                   <div className="px-4 py-2 text-xs font-mono text-race-dim">{user.email}</div>
+                  {driverSlug && (
+                    <Link href={`/driver/${driverSlug}`} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-race-dim hover:text-race-text hover:bg-race-muted rounded transition-colors">
+                      <User size={16} />MY PROFILE
+                    </Link>
+                  )}
                   <Link href="/pro" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-race-dim hover:text-race-text hover:bg-race-muted rounded transition-colors">
                     <Zap size={16} className="text-yellow-400" />PRO
                   </Link>

@@ -19,8 +19,8 @@ export default async function AdminPage() {
   const [usersRes, lapsRes, codesRes, seasonsRes, challengesRes, h2hRes, carsRes, tracksRes] = await Promise.all([
     supabase.from("users").select("*").order("created_at", { ascending: false }),
     supabase.from("lap_times").select(`
-      id, lap_time_formatted, submitted_at, driver_id, validation_status, flag_reason,
-      users(driver_name, email),
+      id, lap_time_formatted, lap_time_ms, submitted_at, driver_id, validation_status, flag_reason,
+      users(driver_name, email, team_name),
       cars(name),
       tracks(name)
     `).order("submitted_at", { ascending: false }),

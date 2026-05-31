@@ -6,7 +6,7 @@ import { LatestSubmissions } from "@/components/dashboard/LatestSubmissions";
 import { TopDrivers } from "@/components/dashboard/TopDrivers";
 import { PersonalDashboard } from "@/components/dashboard/PersonalDashboard";
 import { createClient } from "@/lib/supabase/server";
-import { Users, Timer, MapPin, Trophy, Flag, ChevronRight, Zap } from "lucide-react";
+import { Users, Timer, MapPin, Trophy, Flag, ChevronRight, Zap, Swords, Star, Award, Target } from "lucide-react";
 
 async function getTopDrivers() {
   const supabase = await createClient();
@@ -113,6 +113,44 @@ export default async function HomePage() {
           driverName={currentProfile.driver_name}
           driverSlug={currentProfile.driver_name.toLowerCase().replace(/\s+/g, "-")}
         />
+      )}
+
+      {/* Feature highlights — only for logged-out visitors */}
+      {!currentProfile && (
+        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-16">
+          <div className="text-center mb-10">
+            <p className="text-race-dim font-mono text-xs tracking-widest mb-2">WHAT YOU GET</p>
+            <h2 className="font-display font-black text-3xl text-race-text tracking-wider">EVERYTHING YOU NEED TO COMPETE</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { icon: Trophy,  color: "text-neon-purple", bg: "bg-neon-purple/10 border-neon-purple/20", title: "LIVE LEADERBOARDS",    desc: "Real-time rankings for every car and track combo. See exactly where you stand against everyone." },
+              { icon: Swords,  color: "text-neon-green",  bg: "bg-neon-green/10  border-neon-green/20",  title: "HEAD-TO-HEAD BATTLES", desc: "Get matched against drivers at your skill level. Win points, climb the rankings." },
+              { icon: Star,    color: "text-yellow-400",  bg: "bg-yellow-400/10  border-yellow-400/20",  title: "CHAMPIONSHIP SEASONS", desc: "F1-style points across a full season. Compete for the title with your whole team." },
+              { icon: Users,   color: "text-neon-purple", bg: "bg-neon-purple/10 border-neon-purple/20", title: "TEAM STANDINGS",       desc: "Race together. Combined team points, roster stats, and your own private team dashboard." },
+              { icon: Award,   color: "text-neon-green",  bg: "bg-neon-green/10  border-neon-green/20",  title: "47 ACHIEVEMENTS",      desc: "Earn badges for milestones, streaks, consistency, and dominating the competition." },
+              { icon: Target,  color: "text-yellow-400",  bg: "bg-yellow-400/10  border-yellow-400/20",  title: "DAILY CHALLENGES",     desc: "Specific car + track events with bonus points. Your streak keeps you honest." },
+            ].map(({ icon: Icon, color, bg, title, desc }) => (
+              <div key={title} className="race-card p-6 hover:border-neon-purple/20 transition-colors">
+                <div className={`w-10 h-10 rounded-lg border flex items-center justify-center mb-4 ${bg}`}>
+                  <Icon size={18} className={color} />
+                </div>
+                <p className="font-display font-bold text-race-text tracking-wider text-sm mb-2">{title}</p>
+                <p className="text-race-dim text-xs font-mono leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <Link
+              href="/auth"
+              className="inline-flex items-center gap-2 bg-neon-purple hover:bg-neon-purple-dark text-white font-display font-bold tracking-widest text-sm px-8 py-3.5 rounded-lg transition-all duration-200"
+              style={{ boxShadow: "0 0 30px rgba(184,79,255,0.3)" }}
+            >
+              <Flag size={16} />CREATE FREE ACCOUNT
+            </Link>
+            <p className="text-race-dim/50 text-xs font-mono mt-3">No subscription required. Free forever.</p>
+          </div>
+        </section>
       )}
 
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-12">
