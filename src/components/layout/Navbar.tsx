@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   Trophy, Flag, LogIn, LogOut, Menu, X, User, Users,
-  Zap, Shield, Star, Settings, Target, Swords, Medal, ChevronDown
+  Zap, Shield, Star, Settings, Target, Swords, Medal, ChevronDown, Award
 } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import clsx from "clsx";
@@ -22,8 +22,9 @@ const navLinks = [
   { href: "/h2h",           label: "H2H",        icon: Swords  },
   { href: "/championship",  label: "CHAMP",      icon: Star    },
   { href: "/teams",         label: "TEAMS",      icon: Users   },
-  { href: "/challenges",    label: "CHALLENGES", icon: Target  },
-  { href: "/submit",        label: "SUBMIT",     icon: Flag    },
+  { href: "/achievements",  label: "ACHIEVEMENTS", icon: Award   },
+  { href: "/challenges",    label: "CHALLENGES",   icon: Target  },
+  { href: "/submit",        label: "SUBMIT",       icon: Flag    },
 ];
 
 export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
