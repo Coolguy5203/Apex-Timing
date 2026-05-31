@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag } from "lucide-react";
+import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag, Medal } from "lucide-react";
 import { LapTrends } from "@/components/driver/LapTrends";
 import { getStreakInfo } from "@/lib/supabase/queries";
 import { StreakDisplay } from "@/components/ui/StreakDisplay";
@@ -183,6 +183,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
             { label: "CARS DRIVEN", value: stats.uniqueCars, icon: Car, color: "text-gradient-purple" },
             { label: "TRACKS RUN", value: stats.uniqueTracks, icon: MapPin, color: "text-neon-green" },
             { label: "TRACK BESTS", value: personalBests.length, icon: Trophy, color: "text-neon-green" },
+            { label: "TOTAL PTS", value: driver.total_points ?? 0, icon: Medal, color: driver.total_points > 0 ? "text-neon-purple" : "text-race-dim" },
           ].map((stat) => (
             <div key={stat.label} className="race-card p-5">
               <div className="flex items-start justify-between">
@@ -199,6 +200,33 @@ export default async function DriverPage({ params }: DriverPageProps) {
           {/* Streak card */}
           <StreakDisplay current={streak.current} longest={streak.longest} shields={streak.shields} />
         </div>
+
+        {/* Points breakdown */}
+        {(driver.total_points ?? 0) > 0 && (
+          <div className="race-card p-4 mb-8 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Medal size={14} className="text-neon-purple" />
+              <span className="font-display font-black text-neon-purple text-xl">{driver.total_points}</span>
+              <span className="text-race-dim text-xs font-mono">TOTAL PTS</span>
+            </div>
+            <div className="h-4 w-px bg-race-border hidden sm:block" />
+            {(driver.h2h_points ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 text-xs font-mono text-race-dim">
+                <Zap size={11} className="text-neon-purple" />
+                <span className="text-race-text font-bold">{driver.h2h_points}</span> H2H PTS
+              </div>
+            )}
+            {(driver.challenge_points ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 text-xs font-mono text-race-dim">
+                <Trophy size={11} className="text-neon-green" />
+                <span className="text-race-text font-bold">{driver.challenge_points}</span> CHALLENGE PTS
+              </div>
+            )}
+            <Link href="/rankings" className="ml-auto text-xs font-mono text-race-dim hover:text-neon-purple transition-colors">
+              VIEW RANKINGS →
+            </Link>
+          </div>
+        )}
 
         {(stats.favouriteCar || stats.favouriteTrack) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">

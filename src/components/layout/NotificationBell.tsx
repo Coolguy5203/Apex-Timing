@@ -25,6 +25,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; color: string }> = {
   H2H_MATCHED:          { icon: <Zap size={14} />,    color: "text-neon-purple" },
   H2H_WIN:              { icon: <Trophy size={14} />, color: "text-neon-green" },
   H2H_LOSS:             { icon: <Zap size={14} />,    color: "text-race-dim" },
+  CHALLENGE_WIN:        { icon: <Trophy size={14} />, color: "text-neon-green" },
 };
 
 export function NotificationBell() {

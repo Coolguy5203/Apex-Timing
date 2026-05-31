@@ -201,6 +201,20 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
     setLoading(null);
   };
 
+  const finalizeChallenge = async (id: string) => {
+    if (!confirm("Finalize this challenge? The driver with the best lap in the window will be awarded the bonus points.")) return;
+    setLoading(`fin-ch-${id}`);
+    const res = await fetch("/api/challenges/finalize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ challenge_id: id }),
+    });
+    const data = await res.json();
+    if (!res.ok) showMessage("error", data.error || "Failed to finalize");
+    else showMessage("success", `✅ ${data.winner_name} awarded +${data.points_awarded} pts`);
+    setLoading(null);
+  };
+
   const deleteChallenge = async (id: string) => {
     if (!confirm("Delete this challenge?")) return;
     setLoading(`del-ch-${id}`);
@@ -740,6 +754,9 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
                     <div className="px-4">
                       <span className="text-neon-green font-mono font-bold text-sm">+{ch.bonus_points}</span>
                     </div>
+                    <button onClick={() => finalizeChallenge(ch.id)} disabled={!!loading} className="px-2 py-1 text-xs font-mono text-neon-green border border-neon-green/30 rounded hover:bg-neon-green/10 transition-all">
+                      {loading === `fin-ch-${ch.id}` ? "..." : "🏁 AWARD"}
+                    </button>
                     <button onClick={() => deleteChallenge(ch.id)} disabled={!!loading} className="p-2 text-race-dim hover:text-red-400 transition-colors">
                       {loading === `del-ch-${ch.id}` ? "..." : <Trash2 size={14} />}
                     </button>
