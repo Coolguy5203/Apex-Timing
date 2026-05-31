@@ -122,7 +122,11 @@ export default async function DriverPage({ params }: DriverPageProps) {
   const data = await getDriverData(slug);
   if (!data) notFound();
   const { driver, personalBests, recentActivity, lapHistory, stats, userAchievements, allAchievements } = data;
-  const streak = await getStreakInfo(driver.id);
+  const [streak, { data: { user: authUser } }] = await Promise.all([
+    getStreakInfo(driver.id),
+    (await import("@/lib/supabase/server")).createClient().then(s => s.auth.getUser()),
+  ]);
+  const isOwnProfile = authUser?.id === driver.id;
 
   return (
     <div className="grid-bg min-h-screen">
@@ -198,7 +202,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
             </div>
           ))}
           {/* Streak card */}
-          <StreakDisplay current={streak.current} longest={streak.longest} shields={streak.shields} />
+          <StreakDisplay current={streak.current} longest={streak.longest} shields={streak.shields} hasLapToday={!isOwnProfile || streak.hasLapToday} />
         </div>
 
         {/* Points breakdown */}

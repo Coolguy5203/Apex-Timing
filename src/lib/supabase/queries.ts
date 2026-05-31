@@ -343,6 +343,7 @@ export interface StreakInfo {
   shields: number;
   isInDanger: boolean;   // missed yesterday, streak saveable today
   streakBeforeBreak: number; // what the streak was before it broke (for the save banner)
+  hasLapToday: boolean;  // submitted at least one lap today
 }
 
 export async function getStreakInfo(driverId: string): Promise<StreakInfo> {
@@ -381,7 +382,9 @@ export async function getStreakInfo(driverId: string): Promise<StreakInfo> {
     shields > 0 &&                          // have shields
     current === 0;                          // streak is actually broken right now
 
-  return { current, longest, shields, isInDanger, streakBeforeBreak };
+  const hasLapToday = uniqueLapDates[uniqueLapDates.length - 1] === today;
+
+  return { current, longest, shields, isInDanger, streakBeforeBreak, hasLapToday };
 }
 
 // Keep old name as alias for places that only need current+longest

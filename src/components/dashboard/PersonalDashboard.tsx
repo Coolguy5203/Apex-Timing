@@ -118,7 +118,7 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
           </p>
           <p className="text-race-dim text-xs font-mono mt-0.5">BEST LAP</p>
         </div>
-        <StreakDisplay current={streak.current} longest={streak.longest} shields={streak.shields} />
+        <StreakDisplay current={streak.current} longest={streak.longest} shields={streak.shields} hasLapToday={streak.hasLapToday} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

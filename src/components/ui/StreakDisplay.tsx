@@ -115,11 +115,12 @@ interface StreakDisplayProps {
   current: number;
   longest: number;
   shields?: number;
+  hasLapToday?: boolean;
   /** "card" = full stat card (dashboard/profile), "badge" = compact inline badge */
   variant?: "card" | "badge";
 }
 
-export function StreakDisplay({ current, longest, shields = 0, variant = "card" }: StreakDisplayProps) {
+export function StreakDisplay({ current, longest, shields = 0, hasLapToday = true, variant = "card" }: StreakDisplayProps) {
   const tier = getTier(current);
 
   if (variant === "badge") {
@@ -154,8 +155,8 @@ export function StreakDisplay({ current, longest, shields = 0, variant = "card" 
       )}
 
       <div className="relative">
-        {/* Flames */}
-        <div className={`text-xl mb-1 leading-none ${tier.pulse ? "animate-pulse" : ""}`}>
+        {/* Flames — dimmed if no lap today and streak is active */}
+        <div className={`text-xl mb-1 leading-none transition-opacity ${tier.pulse && hasLapToday ? "animate-pulse" : ""} ${current > 0 && !hasLapToday ? "opacity-30 grayscale" : ""}`}>
           {current === 0 ? (
             <span className="text-race-dim opacity-30 text-lg">🔥</span>
           ) : (
@@ -203,6 +204,21 @@ export function StreakDisplay({ current, longest, shields = 0, variant = "card" 
             );
           })}
         </div>
+
+        {/* Nudge — only shown when streak is active but no lap submitted today */}
+        {current > 0 && !hasLapToday && (
+          <a
+            href="/submit"
+            className="block mt-3 px-2 py-1.5 rounded bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
+          >
+            <p className="text-orange-400 text-[9px] font-mono font-bold tracking-widest leading-tight">
+              NO LAP TODAY
+            </p>
+            <p className="text-orange-300/70 text-[9px] font-mono leading-tight mt-0.5">
+              SUBMIT ONE TO KEEP YOUR STREAK →
+            </p>
+          </a>
+        )}
       </div>
     </div>
   );
