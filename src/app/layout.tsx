@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { LiveTicker } from "@/components/layout/LiveTicker";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "APEX TIMING | iRacing Lap Tracker",
@@ -17,11 +18,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let isAdmin = false;
+  let isPro = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("is_admin, is_pro")
+      .eq("id", user.id)
+      .single();
+    isAdmin = profile?.is_admin ?? false;
+    isPro = profile?.is_pro ?? false;
+  }
+
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-race-black antialiased">
@@ -31,7 +47,7 @@ export default function RootLayout({
         </div>
         <div className="relative z-10">
           <LiveTicker />
-          <Navbar />
+          <Navbar isAdmin={isAdmin} isPro={isPro} />
           <main className="min-h-screen">{children}</main>
           <footer className="border-t border-race-border mt-20 py-8 px-6">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">

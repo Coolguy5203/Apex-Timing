@@ -7,42 +7,27 @@ import { createClient } from "@/lib/supabase/client";
 import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield } from "lucide-react";
 import clsx from "clsx";
 
-export function Navbar() {
+interface NavbarProps {
+  isAdmin?: boolean;
+  isPro?: boolean;
+}
+
+export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
-const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-   const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data.user);
-      if (data.user) {
-        const { data: prof } = await supabase
-          .from("users")
-          .select("is_admin, is_pro")
-          .eq("id", data.user.id)
-          .single();
-        setProfile(prof);
-      }
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const supabase = createClient();
-        const { data: prof } = await supabase
-          .from("users")
-          .select("is_admin, is_pro")
-          .eq("id", session.user.id)
-          .single();
-        setProfile(prof);
-      } else {
-        setProfile(null);
-      }
-    });    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => {
       listener.subscription.unsubscribe();
@@ -51,8 +36,10 @@ const [user, setUser] = useState<any>(null);
   }, []);
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch (_) {}
     window.location.href = "/";
   };
 
@@ -95,7 +82,7 @@ const navLinks = [
                   <User size={12} className="text-neon-purple" />
                   <span className="text-race-text max-w-[120px] truncate">{user.email?.split("@")[0]}</span>
                 </div>
-                {profile?.is_admin && (                  <Link href="/admin" className="flex items-center gap-1 px-3 py-1.5 text-xs font-mono text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-400/40 rounded transition-all">
+                {isAdmin && (                  <Link href="/admin" className="flex items-center gap-1 px-3 py-1.5 text-xs font-mono text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-400/40 rounded transition-all">
                     <Shield size={12} />ADMIN
                   </Link>
                 )}
@@ -125,7 +112,7 @@ const navLinks = [
             <div className="pt-3 border-t border-race-border mt-3 space-y-1">
               {user ? (
                 <>
-                  {profile?.is_admin && (
+                  {isAdmin && (
                     <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-red-400 hover:bg-race-muted rounded transition-colors">
                       <Shield size={16} />ADMIN
                     </Link>
