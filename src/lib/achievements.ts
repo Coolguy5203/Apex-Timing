@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const ACHIEVEMENT_TIERS: Record<string, { color: string; bg: string; border: string; label: string }> = {
   bronze:    { color: "text-amber-600",  bg: "bg-amber-600/10",  border: "border-amber-600/30",  label: "BRONZE"    },
@@ -7,9 +7,15 @@ export const ACHIEVEMENT_TIERS: Record<string, { color: string; bg: string; bord
   legendary: { color: "text-neon-purple",bg: "bg-neon-purple/10",border: "border-neon-purple/30",label: "LEGENDARY" },
 };
 
-/** Check all achievements for a user and award any new ones. Returns keys of newly unlocked achievements. */
-export async function checkAndAwardAchievements(userId: string): Promise<string[]> {
-  const supabase = await createClient();
+/**
+ * Check all achievements for a user and award any new ones.
+ * Pass in an already-authenticated Supabase client so we don't lose the session
+ * by creating a new one inside.
+ */
+export async function checkAndAwardAchievements(
+  userId: string,
+  supabase: SupabaseClient
+): Promise<string[]> {
 
   const [existingRes, lapRes, profileRes] = await Promise.all([
     supabase.from("user_achievements").select("achievement_key").eq("user_id", userId),
@@ -19,7 +25,7 @@ export async function checkAndAwardAchievements(userId: string): Promise<string[
     supabase.from("users").select("team_name, h2h_wins").eq("id", userId).single(),
   ]);
 
-  const unlocked = new Set((existingRes.data || []).map((a) => a.achievement_key));
+  const unlocked = new Set((existingRes.data || []).map((a: any) => a.achievement_key));
   const laps = lapRes.data || [];
   const profile = profileRes.data;
   const newKeys: string[] = [];
@@ -28,23 +34,23 @@ export async function checkAndAwardAchievements(userId: string): Promise<string[
     if (condition && !unlocked.has(key)) newKeys.push(key);
   };
 
-  // ── LAP COUNT MILESTONES ──────────────────────────────────────────────────
-  maybe("FIRST_LAP",      laps.length >= 1);
-  maybe("FIVE_LAPS",      laps.length >= 5);
-  maybe("TEN_LAPS",       laps.length >= 10);
+  // ── LAP COUNT ────────────────────────────────────────────────────────────
+  maybe("FIRST_LAP",        laps.length >= 1);
+  maybe("FIVE_LAPS",        laps.length >= 5);
+  maybe("TEN_LAPS",         laps.length >= 10);
   maybe("TWENTY_FIVE_LAPS", laps.length >= 25);
-  maybe("FIFTY_LAPS",     laps.length >= 50);
-  maybe("HUNDRED_LAPS",   laps.length >= 100);
-  maybe("DOUBLE_CENTURY", laps.length >= 200);
-  maybe("TRIPLE_CENTURY", laps.length >= 300);
+  maybe("FIFTY_LAPS",       laps.length >= 50);
+  maybe("HUNDRED_LAPS",     laps.length >= 100);
+  maybe("DOUBLE_CENTURY",   laps.length >= 200);
+  maybe("TRIPLE_CENTURY",   laps.length >= 300);
 
-  // ── LAP TIME MILESTONES ───────────────────────────────────────────────────
-  maybe("BEAT_THE_CLOCK", laps.some((l) => l.lap_time_ms < 60_000));
-  maybe("SPEED_LEGEND",   laps.some((l) => l.lap_time_ms < 45_000));
+  // ── LAP TIME ─────────────────────────────────────────────────────────────
+  maybe("BEAT_THE_CLOCK", laps.some((l: any) => l.lap_time_ms < 60_000));
+  maybe("SPEED_LEGEND",   laps.some((l: any) => l.lap_time_ms < 45_000));
 
   // ── UNIQUE CARS & TRACKS ──────────────────────────────────────────────────
-  const uniqueCars   = new Set(laps.map((l) => l.car_id)).size;
-  const uniqueTracks = new Set(laps.map((l) => l.track_id)).size;
+  const uniqueCars   = new Set(laps.map((l: any) => l.car_id)).size;
+  const uniqueTracks = new Set(laps.map((l: any) => l.track_id)).size;
   maybe("TWO_CARS",        uniqueCars   >= 2);
   maybe("MULTI_CAR",       uniqueCars   >= 5);
   maybe("TEN_CARS",        uniqueCars   >= 10);
@@ -54,46 +60,46 @@ export async function checkAndAwardAchievements(userId: string): Promise<string[
   maybe("GLOBE_TROTTER",   uniqueTracks >= 10);
   maybe("GLOBE_MASTER",    uniqueTracks >= 20);
 
-  // ── CAR+TRACK COMBO COUNT ─────────────────────────────────────────────────
-  const uniqueCombos = new Set(laps.map((l) => `${l.car_id}|${l.track_id}`)).size;
+  // ── COMBO COUNT ───────────────────────────────────────────────────────────
+  const uniqueCombos = new Set(laps.map((l: any) => `${l.car_id}|${l.track_id}`)).size;
   maybe("COMBO_KING", uniqueCombos >= 15);
 
   // ── TEAM ──────────────────────────────────────────────────────────────────
   maybe("TEAM_PLAYER", !!profile?.team_name);
 
   // ── NOTES ─────────────────────────────────────────────────────────────────
-  maybe("NOTES_TAKER", laps.some((l) => l.notes && l.notes.trim().length > 0));
+  maybe("NOTES_TAKER", laps.some((l: any) => l.notes && l.notes.trim().length > 0));
 
   // ── SECTOR TIMES ──────────────────────────────────────────────────────────
-  const lapsWithSectors = laps.filter((l) => l.sector_1_ms && l.sector_2_ms && l.sector_3_ms);
+  const lapsWithSectors = laps.filter((l: any) => l.sector_1_ms && l.sector_2_ms && l.sector_3_ms);
   maybe("SECTOR_SPECIALIST", lapsWithSectors.length >= 1);
-  maybe("WITH_SECTORS",      lapsWithSectors.length >= 1);   // alias kept for old key
+  maybe("WITH_SECTORS",      lapsWithSectors.length >= 1);
   maybe("SECTOR_PRO",        lapsWithSectors.length >= 10);
 
-  // ── SUBMISSION TIME OF DAY ────────────────────────────────────────────────
-  const lapHours = laps.map((l) => new Date(l.submitted_at).getHours());
-  maybe("NIGHT_OWL",  lapHours.some((h) => h >= 0  && h < 5));
-  maybe("EARLY_BIRD", lapHours.some((h) => h >= 4  && h < 7));
+  // ── TIME OF DAY ───────────────────────────────────────────────────────────
+  const lapHours = laps.map((l: any) => new Date(l.submitted_at).getUTCHours());
+  maybe("NIGHT_OWL",  lapHours.some((h: number) => h >= 0 && h < 5));
+  maybe("EARLY_BIRD", lapHours.some((h: number) => h >= 4 && h < 7));
 
   // ── WEEKEND ───────────────────────────────────────────────────────────────
-  maybe("WEEKEND_WARRIOR", laps.some((l) => {
-    const day = new Date(l.submitted_at).getDay(); // 0=Sun, 6=Sat
+  maybe("WEEKEND_WARRIOR", laps.some((l: any) => {
+    const day = new Date(l.submitted_at).getUTCDay();
     return day === 0 || day === 6;
   }));
 
   // ── ACTIVE DAYS ───────────────────────────────────────────────────────────
-  const uniqueDays = new Set(laps.map((l) => l.submitted_at.slice(0, 10))).size;
+  const uniqueDays = new Set(laps.map((l: any) => l.submitted_at.slice(0, 10))).size;
   maybe("DAILY_GRINDER", uniqueDays >= 10);
 
-  // ── MULTIPLE LAPS IN ONE DAY ──────────────────────────────────────────────
+  // ── MULTI-LAP DAY ─────────────────────────────────────────────────────────
   const lapsByDay = new Map<string, number>();
   for (const l of laps) {
-    const d = l.submitted_at.slice(0, 10);
+    const d = (l as any).submitted_at.slice(0, 10);
     lapsByDay.set(d, (lapsByDay.get(d) ?? 0) + 1);
   }
   maybe("QUICK_SESSION", [...lapsByDay.values()].some((n) => n >= 3));
 
-  // ── STREAK-BASED ──────────────────────────────────────────────────────────
+  // ── STREAKS ───────────────────────────────────────────────────────────────
   const { getStreakInfo } = await import("@/lib/supabase/queries");
   const streak = await getStreakInfo(userId);
   const bestStreak = Math.max(streak.current, streak.longest);
@@ -107,11 +113,10 @@ export async function checkAndAwardAchievements(userId: string): Promise<string[
 
   // ── H2H ──────────────────────────────────────────────────────────────────
   const h2hWins = profile?.h2h_wins ?? 0;
-  // Check if driver has any H2H matchup (participated)
   if (!unlocked.has("FIRST_H2H") || !unlocked.has("H2H_WINNER") || !unlocked.has("H2H_VETERAN") || !unlocked.has("H2H_CHAMPION")) {
     const { data: matchups } = await supabase
       .from("h2h_matchups")
-      .select("winner_id")
+      .select("id")
       .or(`driver_a_id.eq.${userId},driver_b_id.eq.${userId}`)
       .limit(1);
     maybe("FIRST_H2H",    (matchups?.length ?? 0) > 0);
@@ -120,23 +125,22 @@ export async function checkAndAwardAchievements(userId: string): Promise<string[
     maybe("H2H_CHAMPION", h2hWins >= 5);
   }
 
-  // ── LEADERBOARD RANK ──────────────────────────────────────────────────────
-  if (!unlocked.has("PODIUM") || !unlocked.has("POLE_POSITION") || !unlocked.has("CLEAN_SWEEP") || !unlocked.has("DOMINANT") || !unlocked.has("GRAND_MASTER")) {
+  // ── LEADERBOARD RANKS ────────────────────────────────────────────────────
+  if (!unlocked.has("PODIUM") || !unlocked.has("POLE_POSITION") || !unlocked.has("CLEAN_SWEEP") || !unlocked.has("DOMINANT") || !unlocked.has("GRAND_MASTER") || !unlocked.has("PB_HUNTER")) {
     const pbMap = new Map<string, number>();
-    for (const lap of [...laps].sort((a, b) => a.lap_time_ms - b.lap_time_ms)) {
-      const k = `${lap.car_id}__${lap.track_id}`;
-      if (!pbMap.has(k)) pbMap.set(k, lap.lap_time_ms);
+    for (const lap of [...laps].sort((a: any, b: any) => a.lap_time_ms - b.lap_time_ms)) {
+      const k = `${(lap as any).car_id}__${(lap as any).track_id}`;
+      if (!pbMap.has(k)) pbMap.set(k, (lap as any).lap_time_ms);
     }
 
-    // ── PB HUNTER — beat your own best 5 times ────────────────────────────
     if (!unlocked.has("PB_HUNTER")) {
       const comboPBs = new Map<string, number>();
       let pbBeats = 0;
-      for (const lap of [...laps].sort((a, b) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime())) {
-        const k = `${lap.car_id}__${lap.track_id}`;
+      for (const lap of [...laps].sort((a: any, b: any) => new Date((a as any).submitted_at).getTime() - new Date((b as any).submitted_at).getTime())) {
+        const k = `${(lap as any).car_id}__${(lap as any).track_id}`;
         const prev = comboPBs.get(k);
-        if (prev !== undefined && lap.lap_time_ms < prev) pbBeats++;
-        if (prev === undefined || lap.lap_time_ms < prev) comboPBs.set(k, lap.lap_time_ms);
+        if (prev !== undefined && (lap as any).lap_time_ms < prev) pbBeats++;
+        if (prev === undefined || (lap as any).lap_time_ms < prev) comboPBs.set(k, (lap as any).lap_time_ms);
       }
       maybe("PB_HUNTER", pbBeats >= 5);
     }
@@ -152,7 +156,7 @@ export async function checkAndAwardAchievements(userId: string): Promise<string[
         .neq("validation_status", "flagged")
         .lt("lap_time_ms", myBest)
         .neq("driver_id", userId);
-      const uniqueFaster = new Set((faster || []).map((r) => r.driver_id)).size;
+      const uniqueFaster = new Set((faster || []).map((r: any) => r.driver_id)).size;
       const rank = uniqueFaster + 1;
       if (rank <= 3) maybe("PODIUM", true);
       if (rank === 1) { maybe("POLE_POSITION", true); p1Count++; }
@@ -164,20 +168,30 @@ export async function checkAndAwardAchievements(userId: string): Promise<string[
 
   if (newKeys.length === 0) return [];
 
-  // Insert new achievements
-  await supabase.from("user_achievements").insert(
-    newKeys.map((key) => ({ user_id: userId, achievement_key: key }))
-  );
+  // ── INSERT ONE BY ONE so a single failure doesn't block the rest ──────────
+  const awarded: string[] = [];
+  for (const key of newKeys) {
+    const { error } = await supabase
+      .from("user_achievements")
+      .upsert({ user_id: userId, achievement_key: key }, { onConflict: "user_id,achievement_key", ignoreDuplicates: true });
+    if (error) {
+      console.error(`[achievements] failed to insert ${key} for ${userId}:`, error.message);
+    } else {
+      awarded.push(key);
+    }
+  }
 
-  // Create in-app notifications
+  if (awarded.length === 0) return [];
+
+  // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
   const { data: achDefs } = await supabase
     .from("achievements")
     .select("key, name, icon, tier")
-    .in("key", newKeys);
+    .in("key", awarded);
 
   if (achDefs && achDefs.length > 0) {
     await supabase.from("notifications").insert(
-      achDefs.map((a) => ({
+      achDefs.map((a: any) => ({
         user_id: userId,
         type: "ACHIEVEMENT_UNLOCKED",
         title: `Achievement Unlocked: ${a.name}`,
@@ -187,5 +201,5 @@ export async function checkAndAwardAchievements(userId: string): Promise<string[
     );
   }
 
-  return newKeys;
+  return awarded;
 }
