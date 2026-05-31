@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
+import { AdminTools } from "@/components/settings/AdminTools";
 import { Settings } from "lucide-react";
 
 export default async function SettingsPage() {
@@ -35,6 +36,11 @@ export default async function SettingsPage() {
           isPro={profile?.is_pro || false}
           teamName={profile?.team_name || null}
         />
+        {profile?.is_admin && (
+          <div className="mt-6">
+            <AdminTools currentTeamRank={profile?.team_rank ?? 0} />
+          </div>
+        )}
       </div>
     </div>
   );
