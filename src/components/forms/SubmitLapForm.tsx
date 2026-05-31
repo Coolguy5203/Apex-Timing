@@ -129,6 +129,9 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         }),
       }).catch(() => {});
 
+      // Check if this lap hit a streak milestone → may award a shield
+      fetch("/api/streak/milestone", { method: "POST" }).catch(() => {});
+
       setSuccess(true);
       setTimeout(() => { router.push("/leaderboard"); router.refresh(); }, 2000);
     } catch (err: any) {

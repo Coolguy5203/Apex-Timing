@@ -114,11 +114,12 @@ function getTier(days: number): StreakTier {
 interface StreakDisplayProps {
   current: number;
   longest: number;
+  shields?: number;
   /** "card" = full stat card (dashboard/profile), "badge" = compact inline badge */
   variant?: "card" | "badge";
 }
 
-export function StreakDisplay({ current, longest, variant = "card" }: StreakDisplayProps) {
+export function StreakDisplay({ current, longest, shields = 0, variant = "card" }: StreakDisplayProps) {
   const tier = getTier(current);
 
   if (variant === "badge") {
@@ -185,6 +186,23 @@ export function StreakDisplay({ current, longest, variant = "card" }: StreakDisp
         <p className="text-race-dim/50 text-[10px] font-mono mt-0.5">
           {current === 0 && longest > 0 ? `BEST: ${longest}` : tier.sublabel}
         </p>
+
+        {/* Shield icons */}
+        <div className="flex items-center justify-center gap-0.5 mt-2">
+          {Array.from({ length: 3 }).map((_, i) => {
+            const active = i < shields;
+            return (
+              <svg key={i} width="11" height="13" viewBox="0 0 11 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M5.5 0.5L1 2.5V6.5C1 9.3 3 11.9 5.5 12.5C8 11.9 10 9.3 10 6.5V2.5L5.5 0.5Z"
+                  fill={active ? (current >= 60 ? "#ffd700" : current >= 30 ? "#f87171" : "#f97316") : "none"}
+                  stroke={active ? (current >= 60 ? "#ffd700" : current >= 30 ? "#f87171" : "#f97316") : "rgba(255,255,255,0.15)"}
+                  strokeWidth="1"
+                />
+              </svg>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

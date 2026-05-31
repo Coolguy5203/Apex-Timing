@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatLapTime, formatRelativeTime } from "@/utils/lapTime";
-import { getDriverStreak } from "@/lib/supabase/queries";
+import { getStreakInfo } from "@/lib/supabase/queries";
 import { StreakDisplay } from "@/components/ui/StreakDisplay";
+import { StreakSaveBanner } from "@/components/ui/StreakSaveBanner";
 import { Timer, Trophy, Zap, ChevronRight, TrendingDown } from "lucide-react";
 import Link from "next/link";
 
@@ -28,7 +29,7 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
       .select("lap_time_ms, car_id, track_id, cars(name, class), tracks(name)")
       .eq("driver_id", userId),
     // Streak
-    getDriverStreak(userId),
+    getStreakInfo(userId),
   ]);
 
   const recentLaps = recentRes.data || [];
@@ -90,6 +91,14 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
         </Link>
       </div>
 
+      {/* Streak danger banner */}
+      {streak.isInDanger && (
+        <StreakSaveBanner
+          streakBeforeBreak={streak.streakBeforeBreak}
+          shields={streak.shields}
+        />
+      )}
+
       {/* Quick stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="race-card p-4 text-center">
@@ -109,7 +118,7 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
           </p>
           <p className="text-race-dim text-xs font-mono mt-0.5">BEST LAP</p>
         </div>
-        <StreakDisplay current={streak.current} longest={streak.longest} />
+        <StreakDisplay current={streak.current} longest={streak.longest} shields={streak.shields} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

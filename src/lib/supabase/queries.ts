@@ -337,15 +337,76 @@ function calcStreaks(submittedDates: string[]): { current: number; longest: numb
   return { current, longest };
 }
 
-export async function getDriverStreak(driverId: string): Promise<{ current: number; longest: number }> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("lap_times")
-    .select("submitted_at")
-    .eq("driver_id", driverId)
-    .order("submitted_at", { ascending: true });
-  return calcStreaks((data || []).map((r) => r.submitted_at));
+export interface StreakInfo {
+  current: number;
+  longest: number;
+  shields: number;
+  isInDanger: boolean;   // missed yesterday, streak saveable today
+  streakBeforeBreak: number; // what the streak was before it broke (for the save banner)
 }
+
+export async function getStreakInfo(driverId: string): Promise<StreakInfo> {
+  const supabase = await createClient();
+
+  const [lapsRes, savesRes, profileRes] = await Promise.all([
+    supabase.from("lap_times").select("submitted_at").eq("driver_id", driverId).order("submitted_at", { ascending: true }),
+    supabase.from("streak_saves").select("saved_date").eq("user_id", driverId),
+    supabase.from("users").select("streak_shield_count").eq("id", driverId).single(),
+  ]);
+
+  const lapDates = (lapsRes.data || []).map((r) => r.submitted_at);
+  const savedDates = (savesRes.data || []).map((r) => r.saved_date as string);
+  const shields = profileRes.data?.streak_shield_count ?? 0;
+
+  // Merge real lap dates + shield-saved dates
+  const allDates = [...lapDates, ...savedDates];
+  const { current, longest } = calcStreaks(allDates);
+
+  // Danger detection: last REAL lap was exactly 2 days ago (missed yesterday only)
+  // and no save has already been applied for yesterday
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  const uniqueLapDates = [...new Set(lapDates.map((d) => d.slice(0, 10)))].sort();
+  const lastRealLap = uniqueLapDates[uniqueLapDates.length - 1] ?? null;
+  const alreadySavedYesterday = savedDates.some((d) => d.slice(0, 10) === yesterday);
+
+  // Streak before break: what was the streak up to the day before yesterday?
+  const dayBeforeYesterday = new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 10);
+  const datesUpToBreak = uniqueLapDates.filter((d) => d <= dayBeforeYesterday);
+  const { current: streakBeforeBreak } = calcStreaks(datesUpToBreak.map((d) => d + "T00:00:00Z"));
+
+  const isInDanger =
+    lastRealLap === dayBeforeYesterday &&   // last real lap was day-before-yesterday
+    !alreadySavedYesterday &&               // haven't already saved yesterday
+    shields > 0 &&                          // have shields
+    current === 0;                          // streak is actually broken right now
+
+  return { current, longest, shields, isInDanger, streakBeforeBreak };
+}
+
+// Keep old name as alias for places that only need current+longest
+export async function getDriverStreak(driverId: string): Promise<{ current: number; longest: number }> {
+  const info = await getStreakInfo(driverId);
+  return { current: info.current, longest: info.longest };
+}
+
+export async function checkAndAwardStreakMilestone(userId: string): Promise<void> {
+  const supabase = await createClient();
+  const { current } = await getDriverStreak(userId);
+  const MILESTONES = [7, 14, 30, 60];
+  const milestone = MILESTONES.find((m) => current === m);
+  if (!milestone) return;
+
+  // Try to insert the milestone record (UNIQUE constraint prevents double-awarding)
+  const { error } = await supabase
+    .from("streak_milestones")
+    .insert({ user_id: userId, milestone });
+  if (error) return; // already awarded
+
+  // Award a shield (cap at 3)
+  await supabase.rpc("increment_shields", { uid: userId });
+}
+
 
 // ── Team standings ───────────────────────────────────────────────────────────
 

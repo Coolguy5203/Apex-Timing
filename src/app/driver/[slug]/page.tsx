@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag } from "lucide-react";
 import { LapTrends } from "@/components/driver/LapTrends";
-import { getDriverStreak } from "@/lib/supabase/queries";
+import { getStreakInfo } from "@/lib/supabase/queries";
 import { StreakDisplay } from "@/components/ui/StreakDisplay";
 
 interface DriverPageProps {
@@ -112,7 +112,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
   const data = await getDriverData(slug);
   if (!data) notFound();
   const { driver, personalBests, recentActivity, lapHistory, stats } = data;
-  const streak = await getDriverStreak(driver.id);
+  const streak = await getStreakInfo(driver.id);
 
   return (
     <div className="grid-bg min-h-screen">
@@ -177,7 +177,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
             </div>
           ))}
           {/* Streak card */}
-          <StreakDisplay current={streak.current} longest={streak.longest} />
+          <StreakDisplay current={streak.current} longest={streak.longest} shields={streak.shields} />
         </div>
 
         {(stats.favouriteCar || stats.favouriteTrack) && (
