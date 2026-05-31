@@ -69,7 +69,7 @@ function ChallengeCard({ challenge, entries, rank }: { challenge: any; entries: 
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              {isActive && <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-neon-green/15 text-neon-green border border-neon-green/30 animate-pulse">LIVE</span>}
+              {isActive && <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-neon-green/15 text-neon-green border border-neon-green/30 animate-pulse-slow">LIVE</span>}
               <h3 className={`font-display font-bold tracking-widest ${isActive ? "text-neon-green" : "text-race-text"}`}>
                 {challenge.name.toUpperCase()}
               </h3>
@@ -186,7 +186,7 @@ export default async function ChallengesPage() {
         {activeWithEntries.length > 0 && (
           <div className="mb-10">
             <h2 className="section-label mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-neon-green animate-pulse inline-block" />
+              <span className="w-2 h-2 rounded-full bg-neon-green animate-pulse-slow inline-block" />
               ACTIVE CHALLENGES
             </h2>
             <div className="space-y-6">
