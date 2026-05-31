@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatLapTime, formatRelativeTime } from "@/utils/lapTime";
 import { getDriverStreak } from "@/lib/supabase/queries";
-import { Timer, Trophy, Zap, ChevronRight, TrendingDown, Flame } from "lucide-react";
+import { StreakDisplay } from "@/components/ui/StreakDisplay";
+import { Timer, Trophy, Zap, ChevronRight, TrendingDown } from "lucide-react";
 import Link from "next/link";
 
 interface PersonalDashboardProps {
@@ -108,21 +109,7 @@ export async function PersonalDashboard({ userId, driverName, driverSlug }: Pers
           </p>
           <p className="text-race-dim text-xs font-mono mt-0.5">BEST LAP</p>
         </div>
-        <div className={`race-card p-4 text-center relative overflow-hidden ${streak.current >= 3 ? "border-orange-500/40" : ""}`}>
-          {streak.current >= 3 && (
-            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-transparent pointer-events-none" />
-          )}
-          <Flame size={16} className={`mx-auto mb-1.5 ${streak.current >= 3 ? "text-orange-400" : "text-race-dim"}`} />
-          <p className={`font-display font-black text-2xl ${streak.current >= 3 ? "text-orange-400" : "text-race-text"}`}>
-            {streak.current}
-          </p>
-          <p className="text-race-dim text-xs font-mono mt-0.5">
-            DAY STREAK
-            {streak.current === 0 && streak.longest > 0 && (
-              <span className="block text-race-dim/50 text-[10px]">BEST: {streak.longest}</span>
-            )}
-          </p>
-        </div>
+        <StreakDisplay current={streak.current} longest={streak.longest} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

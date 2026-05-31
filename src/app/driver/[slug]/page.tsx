@@ -4,9 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag, Flame } from "lucide-react";
+import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag } from "lucide-react";
 import { LapTrends } from "@/components/driver/LapTrends";
 import { getDriverStreak } from "@/lib/supabase/queries";
+import { StreakDisplay } from "@/components/ui/StreakDisplay";
 
 interface DriverPageProps {
   params: Promise<{ slug: string }>;
@@ -139,11 +140,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
               </div>
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {driver.team_name && <Badge variant="muted" size="md">{driver.team_name.toUpperCase()}</Badge>}
-                {streak.current >= 2 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono font-bold border border-orange-500/30 bg-orange-500/10 text-orange-400">
-                    <Flame size={11} />{streak.current} DAY STREAK
-                  </span>
-                )}
+                <StreakDisplay current={streak.current} longest={streak.longest} variant="badge" />
               </div>
               <div className="flex flex-wrap gap-4 text-xs font-mono text-race-dim">
                 <span className="flex items-center gap-1"><Calendar size={11} />JOINED {new Date(driver.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase()}</span>
@@ -180,23 +177,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
             </div>
           ))}
           {/* Streak card */}
-          <div className={`race-card p-5 relative overflow-hidden ${streak.current >= 3 ? "border-orange-500/40" : ""}`}>
-            {streak.current >= 3 && <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-transparent pointer-events-none" />}
-            <div className="flex items-start justify-between relative">
-              <div>
-                <p className="section-label mb-2">STREAK</p>
-                <p className={`font-display font-black text-3xl md:text-4xl ${streak.current >= 3 ? "text-orange-400" : "text-race-text"}`}>
-                  {streak.current}
-                </p>
-                {streak.longest > 0 && (
-                  <p className="text-race-dim/60 text-xs font-mono mt-1">BEST {streak.longest}</p>
-                )}
-              </div>
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center border ${streak.current >= 3 ? "bg-orange-500/10 border-orange-500/30" : "bg-neon-purple-glow border-neon-purple/20"}`}>
-                <Flame size={16} className={streak.current >= 3 ? "text-orange-400" : "text-race-dim"} />
-              </div>
-            </div>
-          </div>
+          <StreakDisplay current={streak.current} longest={streak.longest} />
         </div>
 
         {(stats.favouriteCar || stats.favouriteTrack) && (
