@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield, Star } from "lucide-react";
+import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield, Star, Settings } from "lucide-react";
 import clsx from "clsx";
 
 interface NavbarProps {
@@ -83,7 +83,11 @@ const navLinks = [
                   <User size={12} className="text-neon-purple" />
                   <span className="text-race-text max-w-[120px] truncate">{user.email?.split("@")[0]}</span>
                 </div>
-                {isAdmin && (                  <Link href="/admin" className="flex items-center gap-1 px-3 py-1.5 text-xs font-mono text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-400/40 rounded transition-all">
+                <Link href="/settings" className="flex items-center gap-1 px-3 py-1.5 text-xs font-mono text-race-dim hover:text-race-text border border-race-border hover:border-race-border/60 rounded transition-all">
+                  <Settings size={12} />
+                </Link>
+                {isAdmin && (
+                  <Link href="/admin" className="flex items-center gap-1 px-3 py-1.5 text-xs font-mono text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-400/40 rounded transition-all">
                     <Shield size={12} />ADMIN
                   </Link>
                 )}
@@ -113,6 +117,9 @@ const navLinks = [
             <div className="pt-3 border-t border-race-border mt-3 space-y-1">
               {user ? (
                 <>
+                  <Link href="/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-race-dim hover:text-race-text hover:bg-race-muted rounded transition-colors">
+                    <Settings size={16} />SETTINGS
+                  </Link>
                   {isAdmin && (
                     <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-red-400 hover:bg-race-muted rounded transition-colors">
                       <Shield size={16} />ADMIN

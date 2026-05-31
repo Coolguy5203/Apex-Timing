@@ -4,6 +4,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { LatestSubmissions } from "@/components/dashboard/LatestSubmissions";
 import { TopDrivers } from "@/components/dashboard/TopDrivers";
+import { PersonalDashboard } from "@/components/dashboard/PersonalDashboard";
 import { createClient } from "@/lib/supabase/server";
 import { Users, Timer, MapPin, Trophy, Flag, ChevronRight, Zap } from "lucide-react";
 
@@ -37,6 +38,19 @@ async function getTopDrivers() {
 }
 
 export default async function HomePage() {
+  const supabaseClient = await createClient();
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  let currentProfile: { id: string; driver_name: string } | null = null;
+  if (user) {
+    const { data } = await supabaseClient
+      .from("users")
+      .select("id, driver_name")
+      .eq("id", user.id)
+      .single();
+    currentProfile = data;
+  }
+
   const [submissions, stats, topDrivers, cars, tracks] = await Promise.all([
     getLatestSubmissions(8),
     getDashboardStats(),
@@ -92,6 +106,14 @@ export default async function HomePage() {
           <StatCard label="CIRCUITS" value={stats.total_tracks} icon={MapPin} accent="green" subtext="Available tracks" />
         </div>
       </section>
+
+      {currentProfile && (
+        <PersonalDashboard
+          userId={currentProfile.id}
+          driverName={currentProfile.driver_name}
+          driverSlug={currentProfile.driver_name.toLowerCase().replace(/\s+/g, "-")}
+        />
+      )}
 
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

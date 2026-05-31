@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Check, Users, LogOut, Plus, Link2, AlertCircle } from "lucide-react";
+import { Copy, Check, Users, LogOut, Plus, Link2, AlertCircle, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import clsx from "clsx";
 
@@ -22,6 +22,8 @@ export function TeamSettings({ userId, teamName, existingInviteCode }: TeamSetti
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showRename, setShowRename] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
 
   const showMsg = (type: "success" | "error", text: string) => {
     setMessage({ type, text });
@@ -72,6 +74,25 @@ export function TeamSettings({ userId, teamName, existingInviteCode }: TeamSetti
     if (error) { showMsg("error", error.message); }
     else {
       showMsg("success", `Team "${newTeamName.trim()}" created!`);
+      setTimeout(() => { router.refresh(); }, 1200);
+    }
+    setLoading(null);
+  };
+
+  const renameTeam = async () => {
+    if (!renameValue.trim()) return;
+    setLoading("rename");
+    const res = await fetch("/api/team/rename", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ new_name: renameValue.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showMsg("error", data.error); }
+    else {
+      showMsg("success", `Team renamed to "${data.team_name}"!`);
+      setShowRename(false);
+      setRenameValue("");
       setTimeout(() => { router.refresh(); }, 1200);
     }
     setLoading(null);
@@ -144,8 +165,44 @@ export function TeamSettings({ userId, teamName, existingInviteCode }: TeamSetti
             )}
           </div>
 
-          {/* Leave team */}
+          {/* Rename team */}
           <div className="pt-3 border-t border-race-border">
+            {!showRename ? (
+              <button
+                onClick={() => { setShowRename(true); setRenameValue(teamName || ""); }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-mono text-race-dim hover:text-race-text border border-race-border hover:border-race-border/60 rounded-lg transition-all"
+              >
+                <Pencil size={13} />RENAME TEAM
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <p className="section-label">NEW TEAM NAME</p>
+                <input
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  placeholder="Enter new team name"
+                  className="input-field"
+                  maxLength={32}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={renameTeam}
+                    disabled={!renameValue.trim() || loading === "rename"}
+                    className="flex-1 py-2.5 bg-neon-purple hover:bg-neon-purple-dark disabled:opacity-50 text-white text-xs font-mono font-bold tracking-widest rounded-lg transition-all"
+                  >
+                    {loading === "rename" ? "RENAMING..." : "CONFIRM RENAME"}
+                  </button>
+                  <button onClick={() => { setShowRename(false); setRenameValue(""); }} className="px-4 py-2.5 border border-race-border text-race-dim text-xs font-mono rounded-lg hover:text-race-text transition-colors">
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Leave team */}
+          <div className="border-t border-race-border">
             <button
               onClick={leaveTeam}
               disabled={loading === "leave"}
