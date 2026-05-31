@@ -35,7 +35,7 @@ export function LeaderboardFilters({ cars, tracks, classes, selectedCar, selecte
     : cars;
 
   return (
-    <div className="race-card p-5 mb-6">
+    <div className="race-card p-5 mb-6 overflow-visible">
       <div className="flex items-center gap-2 mb-4 text-race-dim">
         <Filter size={14} />
         <span className="text-xs font-mono tracking-widest">FILTER</span>
