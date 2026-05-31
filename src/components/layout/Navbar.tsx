@@ -53,9 +53,7 @@ const [user, setUser] = useState<any>(null);
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-    setMobileOpen(false);
+    window.location.href = "/";
   };
 
 const navLinks = [
@@ -124,11 +122,18 @@ const navLinks = [
                 <Icon size={16} />{label}
               </Link>
             ))}
-            <div className="pt-3 border-t border-race-border mt-3">
+            <div className="pt-3 border-t border-race-border mt-3 space-y-1">
               {user ? (
-                <button onClick={handleSignOut} className="flex items-center gap-3 px-4 py-3 w-full text-sm font-mono text-red-400">
-                  <LogOut size={16} />SIGN OUT
-                </button>
+                <>
+                  {profile?.is_admin && (
+                    <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-red-400 hover:bg-race-muted rounded transition-colors">
+                      <Shield size={16} />ADMIN
+                    </Link>
+                  )}
+                  <button onClick={handleSignOut} className="flex items-center gap-3 px-4 py-3 w-full text-sm font-mono text-red-400 hover:bg-race-muted rounded transition-colors">
+                    <LogOut size={16} />SIGN OUT
+                  </button>
+                </>
               ) : (
                 <Link href="/auth" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-neon-purple">
                   <LogIn size={16} />SIGN IN / REGISTER
