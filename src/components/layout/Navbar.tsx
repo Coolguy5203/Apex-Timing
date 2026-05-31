@@ -54,6 +54,7 @@ const [user, setUser] = useState<any>(null);
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
+    router.refresh();
     setMobileOpen(false);
   };
 
