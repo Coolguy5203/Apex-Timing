@@ -13,3 +13,12 @@ export function checkLapSuspicious(
   }
   return null;
 }
+
+// Returns flag reason if the session lap count looks unreasonable, null if fine.
+export function checkSessionLapsSuspicious(lapsInSession: number | null): string | null {
+  if (lapsInSession === null) return null;
+  if (lapsInSession > 200) return `Implausible session lap count: ${lapsInSession} laps`;
+  if (lapsInSession > 100) return `Very high session lap count: ${lapsInSession} laps`;
+  if (lapsInSession > 50)  return `Unusually high session lap count: ${lapsInSession} laps`;
+  return null;
+}

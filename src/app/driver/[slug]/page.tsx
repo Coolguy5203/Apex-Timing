@@ -28,7 +28,7 @@ async function getDriverData(slug: string) {
 
   const { data: lapTimes } = await supabase
     .from("lap_times")
-    .select(`id, lap_time_ms, lap_time_formatted, submitted_at, notes, validation_status, flag_reason, cars(id, name, class), tracks(id, name, country)`)
+    .select(`id, lap_time_ms, lap_time_formatted, submitted_at, notes, validation_status, flag_reason, laps_in_session, cars(id, name, class), tracks(id, name, country)`)
     .eq("driver_id", driver.id)
     .order("submitted_at", { ascending: false });
 
@@ -42,6 +42,7 @@ async function getDriverData(slug: string) {
   const personalBests = Array.from(pbMap.values()).sort((a, b) => a.lap_time_ms - b.lap_time_ms);
 
   const totalLaps = allLaps.length;
+  const totalSessionLaps = allLaps.reduce((sum, l) => sum + ((l as any).laps_in_session ?? 0), 0);
   const uniqueCars = new Set(allLaps.map((l) => (l.cars as any).id)).size;
   const uniqueTracks = new Set(allLaps.map((l) => (l.tracks as any).id)).size;
   const overallBest = allLaps.reduce((best, lap) => !best || lap.lap_time_ms < best.lap_time_ms ? lap : best, null as any);
@@ -111,7 +112,7 @@ async function getDriverData(slug: string) {
     lapHistory,
     userAchievements: achRes.data || [],
     allAchievements: allAchRes.data || [],
-    stats: { totalLaps, uniqueCars, uniqueTracks, overallBest, favouriteCar, favouriteTrack },
+    stats: { totalLaps, totalSessionLaps, uniqueCars, uniqueTracks, overallBest, favouriteCar, favouriteTrack },
   };
 }
 
@@ -165,9 +166,10 @@ export default async function DriverPage({ params }: DriverPageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {[
             { label: "TOTAL LAPS", value: stats.totalLaps, icon: Flag, color: "text-gradient-purple" },
+            { label: "SESSION LAPS", value: stats.totalSessionLaps || "—", icon: Timer, color: "text-neon-purple" },
             { label: "CARS DRIVEN", value: stats.uniqueCars, icon: Car, color: "text-gradient-purple" },
             { label: "TRACKS RUN", value: stats.uniqueTracks, icon: MapPin, color: "text-neon-green" },
             { label: "TRACK BESTS", value: personalBests.length, icon: Trophy, color: "text-neon-green" },

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { parseLapTime, formatLapTime } from "@/utils/lapTime";
-import { checkLapSuspicious } from "@/utils/lapValidation";
+import { checkLapSuspicious, checkSessionLapsSuspicious } from "@/utils/lapValidation";
 import type { Car, Track } from "@/types";
 import { Flag, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
 import { SearchSelect } from "@/components/ui/SearchSelect";
@@ -87,7 +87,12 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
       ]);
       const personalBestMs = pbRes.data?.lap_time_ms ?? null;
       const trackRecordMs = trRes.data?.lap_time_ms ?? null;
-      const flagReason = checkLapSuspicious(lap_time_ms, personalBestMs, trackRecordMs);
+      const sessionLaps = formData.laps_in_session ? parseInt(formData.laps_in_session) : null;
+
+      const lapFlag     = checkLapSuspicious(lap_time_ms, personalBestMs, trackRecordMs);
+      const sessionFlag = checkSessionLapsSuspicious(sessionLaps);
+      const flagReasons = [lapFlag, sessionFlag].filter(Boolean);
+      const flagReason  = flagReasons.length > 0 ? flagReasons.join("; ") : null;
 
       const s1 = parseLapTime(formData.sector_1);
       const s2 = parseLapTime(formData.sector_2);
@@ -100,7 +105,7 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         lap_time_ms,
         lap_time_formatted: formatLapTime(lap_time_ms),
         notes: formData.notes || null,
-        laps_in_session: formData.laps_in_session ? parseInt(formData.laps_in_session) : null,
+        laps_in_session: sessionLaps,
         submitted_at: new Date().toISOString(),
         validation_status: flagReason ? "flagged" : "valid",
         flag_reason: flagReason ?? null,
