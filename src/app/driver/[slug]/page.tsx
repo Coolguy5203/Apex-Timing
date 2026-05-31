@@ -5,6 +5,7 @@ import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag } from "lucide-react";
+import { LapTrends } from "@/components/driver/LapTrends";
 
 interface DriverPageProps {
   params: Promise<{ slug: string }>;
@@ -24,7 +25,7 @@ async function getDriverData(slug: string) {
 
   const { data: lapTimes } = await supabase
     .from("lap_times")
-    .select(`id, lap_time_ms, lap_time_formatted, submitted_at, notes, cars(id, name, class), tracks(id, name, country)`)
+    .select(`id, lap_time_ms, lap_time_formatted, submitted_at, notes, validation_status, flag_reason, cars(id, name, class), tracks(id, name, country)`)
     .eq("driver_id", driver.id)
     .order("submitted_at", { ascending: false });
 
@@ -83,10 +84,23 @@ async function getDriverData(slug: string) {
     })
   );
 
+  const lapHistory = [...allLaps]
+    .sort((a, b) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime())
+    .map((lap) => ({
+      id: lap.id,
+      lap_time_ms: lap.lap_time_ms,
+      lap_time_formatted: lap.lap_time_formatted,
+      submitted_at: lap.submitted_at,
+      validation_status: (lap as any).validation_status ?? "valid",
+      car: lap.cars as any,
+      track: lap.tracks as any,
+    }));
+
   return {
     driver, allLaps,
     personalBests: pbsWithRank,
     recentActivity: allLaps.slice(0, 8),
+    lapHistory,
     stats: { totalLaps, uniqueCars, uniqueTracks, overallBest, favouriteCar, favouriteTrack },
   };
 }
@@ -95,7 +109,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
   const { slug } = await params;
   const data = await getDriverData(slug);
   if (!data) notFound();
-  const { driver, personalBests, recentActivity, stats } = data;
+  const { driver, personalBests, recentActivity, lapHistory, stats } = data;
 
   return (
     <div className="grid-bg min-h-screen">
@@ -182,6 +196,10 @@ export default async function DriverPage({ params }: DriverPageProps) {
             )}
           </div>
         )}
+
+        <div className="mb-6">
+          <LapTrends laps={lapHistory} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 race-card overflow-hidden">

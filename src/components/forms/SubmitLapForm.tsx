@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { parseLapTime, formatLapTime } from "@/utils/lapTime";
+import { checkLapSuspicious } from "@/utils/lapValidation";
 import type { Car, Track } from "@/types";
 import { Flag, AlertCircle, CheckCircle2, ChevronDown } from "lucide-react";
 import { SearchSelect } from "@/components/ui/SearchSelect";
@@ -60,6 +61,31 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
     try {
       const supabase = createClient();
       const lap_time_ms = parseLapTime(formData.lap_time)!;
+
+      // Fetch personal best and track record for validation
+      const [pbRes, trRes] = await Promise.all([
+        supabase
+          .from("lap_times")
+          .select("lap_time_ms")
+          .eq("driver_id", userId)
+          .eq("car_id", formData.car_id)
+          .eq("track_id", formData.track_id)
+          .order("lap_time_ms", { ascending: true })
+          .limit(1)
+          .single(),
+        supabase
+          .from("lap_times")
+          .select("lap_time_ms")
+          .eq("car_id", formData.car_id)
+          .eq("track_id", formData.track_id)
+          .order("lap_time_ms", { ascending: true })
+          .limit(1)
+          .single(),
+      ]);
+      const personalBestMs = pbRes.data?.lap_time_ms ?? null;
+      const trackRecordMs = trRes.data?.lap_time_ms ?? null;
+      const flagReason = checkLapSuspicious(lap_time_ms, personalBestMs, trackRecordMs);
+
       const { error } = await supabase.from("lap_times").insert({
         driver_id: userId,
         car_id: formData.car_id,
@@ -69,6 +95,8 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
         notes: formData.notes || null,
         laps_in_session: formData.laps_in_session ? parseInt(formData.laps_in_session) : null,
         submitted_at: new Date().toISOString(),
+        validation_status: flagReason ? "flagged" : "valid",
+        flag_reason: flagReason ?? null,
       });
       if (error) throw error;
 

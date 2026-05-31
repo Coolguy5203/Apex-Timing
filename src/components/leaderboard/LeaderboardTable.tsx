@@ -4,7 +4,7 @@ import { formatRelativeTime } from "@/utils/lapTime";
 import type { LeaderboardEntry } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
-import { Zap } from "lucide-react";
+import { Zap, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 interface LeaderboardTableProps {
@@ -91,9 +91,16 @@ export function LeaderboardTable({ entries }: LeaderboardTableProps) {
                 </span>
               </div>
               <div className="px-4 py-4 text-right">
-                <span className={clsx("font-mono font-bold", entry.is_fastest ? "lap-time-fastest text-lg" : "text-race-text text-base")}>
-                  {entry.lap_time_formatted}
-                </span>
+                <div className="flex items-center justify-end gap-2">
+                  {entry.validation_status === "flagged" && (
+                    <span title={entry.flag_reason ?? "Flagged for review"}>
+                      <AlertTriangle size={13} className="text-yellow-400 flex-shrink-0" />
+                    </span>
+                  )}
+                  <span className={clsx("font-mono font-bold", entry.is_fastest ? "lap-time-fastest text-lg" : "text-race-text text-base")}>
+                    {entry.lap_time_formatted}
+                  </span>
+                </div>
               </div>
               <div className="hidden md:block px-4 py-4 text-right">
                 <span className="text-race-dim text-xs font-mono">{formatRelativeTime(entry.submitted_at)}</span>

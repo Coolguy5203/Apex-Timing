@@ -40,6 +40,8 @@ export async function getLeaderboard(
       lap_time_ms,
       submitted_at,
       notes,
+      validation_status,
+      flag_reason,
       users!inner(driver_name, team_name),
       cars!inner(id, name),
       tracks!inner(id, name)
@@ -87,6 +89,8 @@ export async function getLeaderboard(
     gap_to_p1_formatted: formatGap(entry.lap_time_ms - fastestMs),
     submitted_at: entry.submitted_at,
     is_fastest: index === 0,
+    validation_status: (entry as any).validation_status ?? "valid",
+    flag_reason: (entry as any).flag_reason ?? undefined,
   }));
 }
 
@@ -122,6 +126,65 @@ export async function getLatestSubmissions(limit = 8) {
     team_name: (entry.users as any)?.team_name,
     car_name: (entry.cars as any)?.name || "Unknown",
     track_name: (entry.tracks as any)?.name || "Unknown",
+  }));
+}
+
+export async function getDriverPersonalBest(
+  driverId: string,
+  carId: string,
+  trackId: string
+): Promise<number | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("lap_times")
+    .select("lap_time_ms")
+    .eq("driver_id", driverId)
+    .eq("car_id", carId)
+    .eq("track_id", trackId)
+    .order("lap_time_ms", { ascending: true })
+    .limit(1)
+    .single();
+  return data?.lap_time_ms ?? null;
+}
+
+export async function getTrackRecord(
+  carId: string,
+  trackId: string
+): Promise<number | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("lap_times")
+    .select("lap_time_ms")
+    .eq("car_id", carId)
+    .eq("track_id", trackId)
+    .order("lap_time_ms", { ascending: true })
+    .limit(1)
+    .single();
+  return data?.lap_time_ms ?? null;
+}
+
+export async function getDriverLapHistory(driverId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("lap_times")
+    .select(`
+      id,
+      lap_time_ms,
+      submitted_at,
+      validation_status,
+      cars(id, name, class),
+      tracks(id, name)
+    `)
+    .eq("driver_id", driverId)
+    .order("submitted_at", { ascending: true });
+  return (data || []).map((lap) => ({
+    id: lap.id,
+    lap_time_ms: lap.lap_time_ms,
+    lap_time_formatted: formatLapTime(lap.lap_time_ms),
+    submitted_at: lap.submitted_at,
+    validation_status: (lap as any).validation_status ?? "valid",
+    car: lap.cars as any,
+    track: lap.tracks as any,
   }));
 }
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle } from "lucide-react";
+import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck } from "lucide-react";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
@@ -52,6 +52,18 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes }: Admin
       .eq("id", userId);
     if (error) showMessage("error", error.message);
     else { showMessage("success", `PRO status updated`); router.refresh(); }
+    setLoading(null);
+  };
+
+  const approveLap = async (lapId: string) => {
+    setLoading(`approve-${lapId}`);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("lap_times")
+      .update({ validation_status: "valid", flag_reason: null })
+      .eq("id", lapId);
+    if (error) showMessage("error", error.message);
+    else { showMessage("success", "Lap approved"); router.refresh(); }
     setLoading(null);
   };
 
@@ -135,11 +147,12 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes }: Admin
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-4 gap-4 mb-8">
           {[
             { label: "TOTAL DRIVERS", value: users.length, color: "text-neon-purple" },
             { label: "TOTAL LAPS", value: lapTimes.length, color: "text-neon-green" },
             { label: "PRO MEMBERS", value: users.filter(u => u.is_pro).length, color: "text-lap-gold" },
+            { label: "FLAGGED LAPS", value: lapTimes.filter((l: any) => l.validation_status === "flagged").length, color: "text-yellow-400" },
           ].map((stat) => (
             <div key={stat.label} className="race-card p-5">
               <p className="section-label mb-2">{stat.label}</p>
@@ -246,31 +259,50 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes }: Admin
         {/* LAPS TAB */}
         {tab === "laps" && (
           <div className="race-card overflow-hidden">
-            <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-0 border-b border-race-border bg-race-dark px-4 py-3">
-              {["DRIVER", "CAR · TRACK", "TIME", "DATE", "DELETE"].map((col) => (
+            <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto_auto] gap-0 border-b border-race-border bg-race-dark px-4 py-3">
+              {["DRIVER", "CAR · TRACK", "TIME", "DATE", "STATUS", "DELETE"].map((col) => (
                 <div key={col} className="text-xs font-mono text-race-dim tracking-widest">{col}</div>
               ))}
             </div>
-            {lapTimes.map((lap) => (
-              <div key={lap.id} className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-0 border-b border-race-border/40 items-center px-4 py-3 hover:bg-race-muted/30 transition-colors">
-                <span className="font-mono font-bold text-race-text text-sm">
-                  {(lap.users as any)?.driver_name?.toUpperCase()}
-                </span>
-                <div>
-                  <p className="text-race-dim text-xs font-mono">{(lap.cars as any)?.name}</p>
-                  <p className="text-race-dim text-xs font-mono">{(lap.tracks as any)?.name}</p>
+            {lapTimes.map((lap) => {
+              const isFlagged = lap.validation_status === "flagged";
+              return (
+                <div key={lap.id} className={clsx("grid grid-cols-[1fr_1fr_1fr_auto_auto_auto] gap-0 border-b border-race-border/40 items-center px-4 py-3 hover:bg-race-muted/30 transition-colors", isFlagged && "bg-yellow-500/5")}>
+                  <span className="font-mono font-bold text-race-text text-sm">
+                    {(lap.users as any)?.driver_name?.toUpperCase()}
+                  </span>
+                  <div>
+                    <p className="text-race-dim text-xs font-mono">{(lap.cars as any)?.name}</p>
+                    <p className="text-race-dim text-xs font-mono">{(lap.tracks as any)?.name}</p>
+                  </div>
+                  <span className="lap-time-display text-base">{lap.lap_time_formatted}</span>
+                  <span className="text-race-dim text-xs font-mono px-4">{formatRelativeTime(lap.submitted_at)}</span>
+                  <div className="px-4">
+                    {isFlagged ? (
+                      <button
+                        onClick={() => approveLap(lap.id)}
+                        disabled={loading === `approve-${lap.id}`}
+                        title={lap.flag_reason ?? "Flagged"}
+                        className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 hover:bg-neon-green/10 hover:text-neon-green hover:border-neon-green/20 transition-all"
+                      >
+                        {loading === `approve-${lap.id}` ? "..." : <><AlertTriangle size={10} />FLAGGED</>}
+                      </button>
+                    ) : (
+                      <span className="flex items-center gap-1 px-2 py-1 text-xs font-mono text-neon-green/60">
+                        <CheckCheck size={10} />OK
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => deleteLap(lap.id)}
+                    disabled={loading === lap.id}
+                    className="p-2 text-race-dim hover:text-red-400 transition-colors disabled:opacity-40"
+                  >
+                    {loading === lap.id ? "..." : <Trash2 size={14} />}
+                  </button>
                 </div>
-                <span className="lap-time-display text-base">{lap.lap_time_formatted}</span>
-                <span className="text-race-dim text-xs font-mono px-4">{formatRelativeTime(lap.submitted_at)}</span>
-                <button
-                  onClick={() => deleteLap(lap.id)}
-                  disabled={loading === lap.id}
-                  className="p-2 text-race-dim hover:text-red-400 transition-colors disabled:opacity-40"
-                >
-                  {loading === lap.id ? "..." : <Trash2 size={14} />}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

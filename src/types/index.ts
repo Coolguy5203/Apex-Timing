@@ -30,6 +30,8 @@ export interface LapTime {
   lap_time_formatted: string;
   notes?: string;
   submitted_at: string;
+  validation_status: "valid" | "flagged";
+  flag_reason?: string;
   driver?: User;
   car?: Car;
   track?: Track;
@@ -50,6 +52,8 @@ export interface LeaderboardEntry {
   gap_to_p1_formatted: string;
   submitted_at: string;
   is_fastest: boolean;
+  validation_status: "valid" | "flagged";
+  flag_reason?: string;
 }
 
 export interface DashboardStats {
