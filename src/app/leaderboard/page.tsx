@@ -1,19 +1,20 @@
 import { Suspense } from "react";
-import { getLeaderboard, getCars, getTracks } from "@/lib/supabase/queries";
+import { getLeaderboard, getCars, getTracks, getCarClasses } from "@/lib/supabase/queries";
 import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
 import { LeaderboardFilters } from "@/components/leaderboard/LeaderboardFilters";
 import { PageLoader } from "@/components/ui/LoadingSpinner";
 import { Trophy, Zap } from "lucide-react";
 
 interface LeaderboardPageProps {
-  searchParams: Promise<{ car?: string; track?: string }>;
+  searchParams: Promise<{ car?: string; track?: string; class?: string }>;
 }
 
-async function LeaderboardContent({ carId, trackId }: { carId?: string; trackId?: string }) {
-  const [entries, cars, tracks] = await Promise.all([
-    getLeaderboard(carId, trackId),
+async function LeaderboardContent({ carId, trackId, carClass }: { carId?: string; trackId?: string; carClass?: string }) {
+  const [entries, cars, tracks, classes] = await Promise.all([
+    getLeaderboard(carId, trackId, carClass),
     getCars(),
     getTracks(),
+    getCarClasses(),
   ]);
 
   const selectedCar = cars.find((c) => c.id === carId);
@@ -22,11 +23,17 @@ async function LeaderboardContent({ carId, trackId }: { carId?: string; trackId?
   return (
     <div>
       <Suspense fallback={null}>
-        <LeaderboardFilters cars={cars} tracks={tracks} selectedCar={carId} selectedTrack={trackId} />
+        <LeaderboardFilters cars={cars} tracks={tracks} classes={classes} selectedCar={carId} selectedTrack={trackId} selectedClass={carClass} />
       </Suspense>
 
-      {(selectedCar || selectedTrack) && (
+      {(selectedCar || selectedTrack || carClass) && (
         <div className="flex flex-wrap items-center gap-3 mb-4">
+          {carClass && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-neon-purple-glow border border-neon-purple/20 rounded-full">
+              <span className="text-neon-purple text-xs font-mono">CLASS</span>
+              <span className="text-race-text text-xs font-mono font-bold">{carClass}</span>
+            </div>
+          )}
           {selectedCar && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-neon-purple-glow border border-neon-purple/20 rounded-full">
               <span className="text-neon-purple text-xs font-mono">CAR</span>
@@ -66,6 +73,7 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
   const params = await searchParams;
   const carId = params.car;
   const trackId = params.track;
+  const carClass = params.class;
 
   return (
     <div className="grid-bg min-h-screen">
@@ -82,7 +90,7 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
           </div>
         </div>
         <Suspense fallback={<PageLoader />}>
-          <LeaderboardContent carId={carId} trackId={trackId} />
+          <LeaderboardContent carId={carId} trackId={trackId} carClass={carClass} />
         </Suspense>
       </div>
     </div>

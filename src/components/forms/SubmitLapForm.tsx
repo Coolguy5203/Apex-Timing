@@ -102,13 +102,28 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: Su
 
       const selectedCar = cars.find((c) => c.id === formData.car_id);
       const selectedTrack = tracks.find((t) => t.id === formData.track_id);
+      const notifPayload = {
+        driver_name: driverName,
+        team_name: teamName,
+        lap_time: formatLapTime(lap_time_ms),
+        car_name: selectedCar?.name ?? "Unknown",
+        track_name: selectedTrack?.name ?? "Unknown",
+      };
       fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notifPayload),
+      }).catch(() => {});
+
+      fetch("/api/notifications/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          driver_id: userId,
+          car_id: formData.car_id,
+          track_id: formData.track_id,
+          lap_time_ms,
           driver_name: driverName,
-          team_name: teamName,
-          lap_time: formatLapTime(lap_time_ms),
           car_name: selectedCar?.name ?? "Unknown",
           track_name: selectedTrack?.name ?? "Unknown",
         }),

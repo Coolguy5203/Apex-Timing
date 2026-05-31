@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck } from "lucide-react";
+import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck, Trophy, Calendar } from "lucide-react";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
@@ -13,17 +13,20 @@ interface AdminDashboardProps {
   users: any[];
   lapTimes: any[];
   proCodes: any[];
+  seasons: any[];
 }
 
-type Tab = "users" | "laps" | "codes";
+type Tab = "users" | "laps" | "codes" | "seasons";
 
-export function AdminDashboard({ currentUser, users, lapTimes, proCodes }: AdminDashboardProps) {
+export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons }: AdminDashboardProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("users");
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [newCode, setNewCode] = useState({ code: "", description: "", max_uses: "" });
   const [showNewCode, setShowNewCode] = useState(false);
+  const [newSeason, setNewSeason] = useState({ name: "", start_date: "", end_date: "" });
+  const [showNewSeason, setShowNewSeason] = useState(false);
 
   const showMessage = (type: "success" | "error", text: string) => {
     setMessage({ type, text });
@@ -119,10 +122,55 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes }: Admin
     setLoading(null);
   };
 
+  const createSeason = async () => {
+    if (!newSeason.name || !newSeason.start_date || !newSeason.end_date) return;
+    setLoading("new-season");
+    const supabase = createClient();
+    const { error } = await supabase.from("seasons").insert({
+      name: newSeason.name.trim(),
+      start_date: newSeason.start_date,
+      end_date: newSeason.end_date,
+      is_active: false,
+      created_by: currentUser.id,
+    });
+    if (error) showMessage("error", error.message);
+    else {
+      showMessage("success", "Season created!");
+      setNewSeason({ name: "", start_date: "", end_date: "" });
+      setShowNewSeason(false);
+      router.refresh();
+    }
+    setLoading(null);
+  };
+
+  const toggleSeason = async (seasonId: string, currentlyActive: boolean) => {
+    setLoading(`season-${seasonId}`);
+    const supabase = createClient();
+    if (!currentlyActive) {
+      // Deactivate all, then activate this one
+      await supabase.from("seasons").update({ is_active: false }).neq("id", "00000000-0000-0000-0000-000000000000");
+    }
+    const { error } = await supabase.from("seasons").update({ is_active: !currentlyActive }).eq("id", seasonId);
+    if (error) showMessage("error", error.message);
+    else { showMessage("success", currentlyActive ? "Season deactivated" : "Season set as active"); router.refresh(); }
+    setLoading(null);
+  };
+
+  const deleteSeason = async (seasonId: string) => {
+    if (!confirm("Delete this season?")) return;
+    setLoading(`del-season-${seasonId}`);
+    const supabase = createClient();
+    const { error } = await supabase.from("seasons").delete().eq("id", seasonId);
+    if (error) showMessage("error", error.message);
+    else { showMessage("success", "Season deleted"); router.refresh(); }
+    setLoading(null);
+  };
+
   const tabs: { id: Tab; label: string; icon: any; count: number }[] = [
     { id: "users", label: "DRIVERS", icon: Users, count: users.length },
     { id: "laps", label: "LAP TIMES", icon: Timer, count: lapTimes.length },
     { id: "codes", label: "PRO CODES", icon: Key, count: proCodes.length },
+    { id: "seasons", label: "SEASONS", icon: Trophy, count: seasons.length },
   ];
 
   return (
@@ -408,6 +456,98 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes }: Admin
             </div>
           </div>
         )}
+        {/* SEASONS TAB */}
+        {tab === "seasons" && (
+          <div>
+            <div className="mb-4">
+              {!showNewSeason ? (
+                <button
+                  onClick={() => setShowNewSeason(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-neon-purple hover:bg-neon-purple-dark text-white text-xs font-mono font-bold tracking-widest rounded-lg transition-all"
+                  style={{ boxShadow: "0 0 20px rgba(184,79,255,0.2)" }}
+                >
+                  <Plus size={14} />CREATE SEASON
+                </button>
+              ) : (
+                <div className="race-card p-5 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="section-label">NEW SEASON</p>
+                    <button onClick={() => setShowNewSeason(false)} className="text-race-dim hover:text-race-text"><X size={16} /></button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="section-label block mb-1">NAME</label>
+                      <input type="text" value={newSeason.name} onChange={(e) => setNewSeason(p => ({ ...p, name: e.target.value }))} placeholder="Season 1 — 2025" className="input-field" />
+                    </div>
+                    <div>
+                      <label className="section-label block mb-1">START DATE</label>
+                      <input type="date" value={newSeason.start_date} onChange={(e) => setNewSeason(p => ({ ...p, start_date: e.target.value }))} className="input-field" />
+                    </div>
+                    <div>
+                      <label className="section-label block mb-1">END DATE</label>
+                      <input type="date" value={newSeason.end_date} onChange={(e) => setNewSeason(p => ({ ...p, end_date: e.target.value }))} className="input-field" />
+                    </div>
+                  </div>
+                  <button
+                    onClick={createSeason}
+                    disabled={!newSeason.name || !newSeason.start_date || !newSeason.end_date || loading === "new-season"}
+                    className="mt-3 flex items-center gap-2 px-4 py-2 bg-neon-purple hover:bg-neon-purple-dark disabled:opacity-50 text-white text-xs font-mono font-bold tracking-widest rounded transition-all"
+                  >
+                    {loading === "new-season" ? "CREATING..." : <><Plus size={12} />CREATE SEASON</>}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="race-card overflow-hidden">
+              <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-0 border-b border-race-border bg-race-dark px-4 py-3">
+                {["NAME", "DATES", "STATUS", "ACTIVATE", "DELETE"].map((col) => (
+                  <div key={col} className="text-xs font-mono text-race-dim tracking-widest">{col}</div>
+                ))}
+              </div>
+              {seasons.length === 0 ? (
+                <div className="p-8 text-center text-race-dim font-mono text-sm">NO SEASONS YET</div>
+              ) : seasons.map((season) => (
+                <div key={season.id} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-0 border-b border-race-border/40 items-center px-4 py-3 hover:bg-race-muted/30 transition-colors">
+                  <span className="font-mono font-bold text-race-text text-sm">{season.name}</span>
+                  <div className="px-4 text-xs font-mono text-race-dim">
+                    <div className="flex items-center gap-1"><Calendar size={10} />{season.start_date}</div>
+                    <div className="flex items-center gap-1"><Calendar size={10} />{season.end_date}</div>
+                  </div>
+                  <div className="px-4">
+                    {season.is_active ? (
+                      <span className="px-2 py-1 rounded text-xs font-mono font-bold bg-neon-green/10 text-neon-green border border-neon-green/20">ACTIVE</span>
+                    ) : (
+                      <span className="px-2 py-1 rounded text-xs font-mono text-race-dim border border-race-border">INACTIVE</span>
+                    )}
+                  </div>
+                  <div className="px-4">
+                    <button
+                      onClick={() => toggleSeason(season.id, season.is_active)}
+                      disabled={loading === `season-${season.id}`}
+                      className={clsx(
+                        "px-3 py-1 rounded text-xs font-mono font-bold transition-all",
+                        season.is_active
+                          ? "bg-race-muted text-race-dim border border-race-border hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20"
+                          : "bg-neon-purple/10 text-neon-purple border border-neon-purple/20 hover:bg-neon-purple hover:text-white"
+                      )}
+                    >
+                      {loading === `season-${season.id}` ? "..." : season.is_active ? "DEACTIVATE" : "SET ACTIVE"}
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => deleteSeason(season.id)}
+                    disabled={!!loading}
+                    className="p-2 text-race-dim hover:text-red-400 transition-colors"
+                  >
+                    {loading === `del-season-${season.id}` ? "..." : <Trash2 size={14} />}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield } from "lucide-react";
+import { Timer, Trophy, Flag, LogIn, LogOut, Menu, X, User, Users, Zap, Shield, Star } from "lucide-react";
 import clsx from "clsx";
 
 interface NavbarProps {
@@ -46,6 +46,7 @@ export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
 const navLinks = [
     { href: "/", label: "DASHBOARD", icon: Timer },
     { href: "/leaderboard", label: "LEADERBOARD", icon: Trophy },
+    { href: "/championship", label: "CHAMPIONSHIP", icon: Star },
     { href: "/team", label: "TEAM", icon: Users },
     { href: "/submit", label: "SUBMIT LAP", icon: Flag },
     { href: "/pro", label: "⚡ PRO", icon: Zap },
