@@ -20,6 +20,8 @@ const TYPE_META: Record<string, { icon: React.ReactNode; color: string }> = {
   LAP_BEATEN:           { icon: <Zap size={14} />,    color: "text-neon-purple" },
   STREAK_MILESTONE:     { icon: <Flame size={14} />,  color: "text-orange-400" },
   CHALLENGE_ACTIVE:     { icon: <Target size={14} />, color: "text-neon-green" },
+  RANK_PROMOTION:       { icon: <Trophy size={14} />, color: "text-yellow-400" },
+  RANK_CHANGE:          { icon: <Trophy size={14} />, color: "text-race-dim" },
 };
 
 export function NotificationBell() {

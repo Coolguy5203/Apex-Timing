@@ -5,6 +5,8 @@ import { Users, Trophy, Timer, Zap, Car, MapPin, Medal, Activity, Lock } from "l
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Badge } from "@/components/ui/Badge";
 import { TeamSettings } from "@/components/team/TeamSettings";
+import { TeamRoster } from "@/components/team/TeamRoster";
+import { RankBadge } from "@/components/ui/RankBadge";
 
 async function getTeamData(currentUserId: string, teamName: string | null) {
   const supabase = await createClient();
@@ -184,68 +186,26 @@ export default async function TeamPage() {
 
           {/* Driver Roster */}
           <div className="lg:col-span-2 race-card p-6">
-            <SectionHeader
-              title="DRIVER ROSTER"
-              subtitle={`${stats.totalDrivers} team ${stats.totalDrivers === 1 ? "driver" : "drivers"}`}
-              icon={Users}
-            />
+            <div className="flex items-start justify-between mb-4">
+              <SectionHeader
+                title="DRIVER ROSTER"
+                subtitle={`${stats.totalDrivers} team ${stats.totalDrivers === 1 ? "driver" : "drivers"}`}
+                icon={Users}
+              />
+              {profile?.team_rank > 0 && (
+                <RankBadge level={profile.team_rank} size="md" />
+              )}
+            </div>
             {drivers.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-race-dim font-mono text-sm">NO DRIVERS YET</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {drivers.map((driver, index) => (
-                  <div
-                    key={driver.id}
-                    className={`flex items-center gap-4 p-4 rounded-lg border transition-all duration-200 hover:border-neon-purple/30 hover:bg-neon-purple/5
-                      ${driver.id === user.id ? "border-neon-purple/30 bg-neon-purple/5" : "border-race-border bg-race-dark"}`}
-                  >
-                    <div className={`w-8 h-8 rounded flex items-center justify-center font-display font-black text-lg flex-shrink-0 ${
-                      index === 0 ? "text-neon-purple" :
-                      index === 1 ? "text-lap-silver" :
-                      index === 2 ? "text-lap-bronze" : "text-race-dim"
-                    }`}>
-                      {index === 0 ? <Medal size={18} className="text-neon-purple" /> : index + 1}
-                    </div>
-                    <div className="w-10 h-10 rounded-lg bg-neon-purple-glow border border-neon-purple/20 flex items-center justify-center flex-shrink-0">
-                      <span className="font-display font-black text-neon-purple text-lg">
-                        {driver.driver_name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-display font-bold text-race-text tracking-wide">
-                          {driver.driver_name.toUpperCase()}
-                        </span>
-                        {driver.id === user.id && (
-                          <Badge variant="purple" size="sm">YOU</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 mt-1 flex-wrap">
-                        <span className="text-race-dim text-xs font-mono">
-                          {driver.lap_count} {driver.lap_count === 1 ? "LAP" : "LAPS"}
-                        </span>
-                        {driver.best_lap && (
-                          <span className="flex items-center gap-1 text-neon-purple text-xs font-mono">
-                            <Zap size={10} />
-                            BEST: {driver.best_lap.lap_time_formatted}
-                          </span>
-                        )}
-                        <span className="text-race-dim/60 text-xs font-mono">
-                          {formatRelativeTime(driver.last_active)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 text-right">
-                      <div className={`text-2xl font-display font-black ${index === 0 ? "text-neon-purple" : "text-race-text"}`}>
-                        {driver.lap_count}
-                      </div>
-                      <div className="text-race-dim text-xs font-mono">LAPS</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <TeamRoster
+                drivers={drivers}
+                currentUserId={user.id}
+                currentUserRank={profile?.team_rank ?? 0}
+              />
             )}
           </div>
 

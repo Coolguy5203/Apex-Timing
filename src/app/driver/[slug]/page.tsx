@@ -9,6 +9,7 @@ import { LapTrends } from "@/components/driver/LapTrends";
 import { getStreakInfo } from "@/lib/supabase/queries";
 import { StreakDisplay } from "@/components/ui/StreakDisplay";
 import { AchievementGrid } from "@/components/achievements/AchievementGrid";
+import { RankBadge } from "@/components/ui/RankBadge";
 
 interface DriverPageProps {
   params: Promise<{ slug: string }>;
@@ -149,6 +150,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
               </div>
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {driver.team_name && <Badge variant="muted" size="md">{driver.team_name.toUpperCase()}</Badge>}
+                <RankBadge level={driver.team_rank ?? 0} size="md" />
                 <StreakDisplay current={streak.current} longest={streak.longest} variant="badge" />
               </div>
               <div className="flex flex-wrap gap-4 text-xs font-mono text-race-dim">

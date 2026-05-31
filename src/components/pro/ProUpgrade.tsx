@@ -22,6 +22,17 @@ export function ProUpgrade() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Get or create a stable device ID stored in localStorage
+  const getDeviceId = (): string => {
+    if (typeof window === "undefined") return "";
+    let id = localStorage.getItem("apex_device_id");
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem("apex_device_id", id);
+    }
+    return id;
+  };
+
   const handleRedeem = async () => {
     if (!code.trim()) { setError("Enter a code first"); return; }
     setLoading(true);
@@ -31,7 +42,7 @@ export function ProUpgrade() {
       const res = await fetch("/api/redeem-pro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: code.trim() }),
+        body: JSON.stringify({ code: code.trim(), device_id: getDeviceId() }),
       });
 
       const data = await res.json();
@@ -121,7 +132,7 @@ export function ProUpgrade() {
             </p>
           )}
           <p className="text-race-dim/50 text-xs font-mono text-center mt-3">
-            Codes are shared by APEX TIMING admins
+            Codes are issued by admins or on team rank promotion · 1 use · device-locked
           </p>
         </div>
       </div>

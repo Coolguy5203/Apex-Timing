@@ -3,16 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
-    const { code } = await req.json();
+    const { code, device_id } = await req.json();
     if (!code) return NextResponse.json({ error: "No code provided" }, { status: 400 });
 
     const supabase = await createClient();
 
-    // Check user is logged in
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
-    // Check if already PRO
     const { data: profile } = await supabase
       .from("users")
       .select("is_pro, pro_code_used")
@@ -37,19 +35,30 @@ export async function POST(req: Request) {
 
     // Check max uses
     if (proCode.max_uses !== null && proCode.use_count >= proCode.max_uses) {
-      return NextResponse.json({ error: "This code has reached its maximum uses" }, { status: 400 });
+      return NextResponse.json({ error: "This code has already been used" }, { status: 400 });
     }
 
-    // Activate PRO for user
+    // If this code was issued to a specific user, enforce it
+    if (proCode.for_user_id && proCode.for_user_id !== user.id) {
+      return NextResponse.json({ error: "This code was issued to a different driver" }, { status: 403 });
+    }
+
+    // Device-lock: if a fingerprint is already stored, must match
+    if (proCode.device_fingerprint && device_id && proCode.device_fingerprint !== device_id) {
+      return NextResponse.json({ error: "This code can only be redeemed on the device it was first used on" }, { status: 403 });
+    }
+
+    // Activate PRO
     await supabase.from("users").update({
       is_pro: true,
       pro_code_used: code.toUpperCase().trim(),
       pro_since: new Date().toISOString(),
     }).eq("id", user.id);
 
-    // Increment use count
+    // Mark code used + store device fingerprint if provided
     await supabase.from("pro_codes").update({
       use_count: proCode.use_count + 1,
+      ...(device_id && !proCode.device_fingerprint ? { device_fingerprint: device_id } : {}),
     }).eq("id", proCode.id);
 
     return NextResponse.json({ success: true });
