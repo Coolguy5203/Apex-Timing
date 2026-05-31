@@ -46,7 +46,7 @@ export function Navbar({ isAdmin = false, isPro = false }: NavbarProps) {
 
 const navLinks = [
     { href: "/leaderboard", label: "TIMES", icon: Trophy },
-    { href: "/compare",     label: "VS",    icon: Swords },
+    { href: "/h2h",         label: "H2H",   icon: Swords },
     { href: "/championship", label: "CHAMP", icon: Star },
     { href: "/teams", label: "TEAMS", icon: Users },
     { href: "/challenges", label: "CHALLENGES", icon: Target },

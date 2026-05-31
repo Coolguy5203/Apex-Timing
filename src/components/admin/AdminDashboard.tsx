@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck, Trophy, Calendar, Target } from "lucide-react";
+import { Shield, Users, Timer, Key, Trash2, Crown, Zap, Plus, X, Check, AlertCircle, AlertTriangle, CheckCheck, Trophy, Calendar, Target, Swords } from "lucide-react";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
@@ -15,13 +15,14 @@ interface AdminDashboardProps {
   proCodes: any[];
   seasons: any[];
   challenges: any[];
+  h2hEvents: any[];
   cars: any[];
   tracks: any[];
 }
 
-type Tab = "users" | "laps" | "codes" | "seasons" | "challenges";
+type Tab = "users" | "laps" | "codes" | "seasons" | "challenges" | "h2h";
 
-export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons, challenges, cars, tracks }: AdminDashboardProps) {
+export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons, challenges, h2hEvents, cars, tracks }: AdminDashboardProps) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("users");
   const [loading, setLoading] = useState<string | null>(null);
@@ -32,6 +33,8 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
   const [showNewSeason, setShowNewSeason] = useState(false);
   const [newChallenge, setNewChallenge] = useState({ name: "", description: "", car_id: "", track_id: "", car_class: "", start_date: "", end_date: "", bonus_points: "5" });
   const [showNewChallenge, setShowNewChallenge] = useState(false);
+  const [newH2H, setNewH2H] = useState({ name: "", start_date: "", end_date: "", points_win: "3", default_car_id: "", default_track_id: "" });
+  const [showNewH2H, setShowNewH2H] = useState(false);
 
   const showMessage = (type: "success" | "error", text: string) => {
     setMessage({ type, text });
@@ -208,12 +211,61 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
     setLoading(null);
   };
 
+  const createH2HEvent = async () => {
+    if (!newH2H.name || !newH2H.start_date || !newH2H.end_date) return;
+    setLoading("new-h2h");
+    const supabase = createClient();
+    const { error } = await supabase.from("h2h_events").insert({
+      name: newH2H.name,
+      start_date: newH2H.start_date,
+      end_date: newH2H.end_date,
+      points_win: parseInt(newH2H.points_win) || 3,
+      default_car_id: newH2H.default_car_id || null,
+      default_track_id: newH2H.default_track_id || null,
+      status: "pending",
+    });
+    if (error) showMessage("error", error.message);
+    else { showMessage("success", "H2H event created"); setShowNewH2H(false); setNewH2H({ name: "", start_date: "", end_date: "", points_win: "3", default_car_id: "", default_track_id: "" }); router.refresh(); }
+    setLoading(null);
+  };
+
+  const generateH2H = async (eventId: string) => {
+    if (!confirm("Generate matchups now? This will pair all drivers by skill level.")) return;
+    setLoading(`gen-${eventId}`);
+    const res = await fetch("/api/h2h/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event_id: eventId }) });
+    const data = await res.json();
+    if (!res.ok) showMessage("error", data.error);
+    else { showMessage("success", `${data.matchups_created} matchups created`); router.refresh(); }
+    setLoading(null);
+  };
+
+  const finalizeH2H = async (eventId: string) => {
+    if (!confirm("Finalize this event? Winners will be determined and points awarded.")) return;
+    setLoading(`fin-${eventId}`);
+    const res = await fetch("/api/h2h/finalize", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event_id: eventId }) });
+    const data = await res.json();
+    if (!res.ok) showMessage("error", data.error);
+    else { showMessage("success", `${data.finalized} matchups finalized`); router.refresh(); }
+    setLoading(null);
+  };
+
+  const deleteH2H = async (id: string) => {
+    if (!confirm("Delete this H2H event and all its matchups?")) return;
+    setLoading(`del-h2h-${id}`);
+    const supabase = createClient();
+    const { error } = await supabase.from("h2h_events").delete().eq("id", id);
+    if (error) showMessage("error", error.message);
+    else { showMessage("success", "H2H event deleted"); router.refresh(); }
+    setLoading(null);
+  };
+
   const tabs: { id: Tab; label: string; icon: any; count: number }[] = [
     { id: "users",      label: "DRIVERS",    icon: Users,   count: users.length      },
     { id: "laps",       label: "LAP TIMES",  icon: Timer,   count: lapTimes.length   },
     { id: "codes",      label: "PRO CODES",  icon: Key,     count: proCodes.length   },
     { id: "seasons",    label: "SEASONS",    icon: Trophy,  count: seasons.length    },
     { id: "challenges", label: "CHALLENGES", icon: Target,  count: challenges.length },
+    { id: "h2h",        label: "H2H",        icon: Swords,  count: h2hEvents.length  },
   ];
 
   return (
@@ -694,6 +746,92 @@ export function AdminDashboard({ currentUser, users, lapTimes, proCodes, seasons
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ── H2H EVENTS ── */}
+        {tab === "h2h" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display font-bold text-race-text tracking-widest">HEAD-TO-HEAD EVENTS</h2>
+              <button onClick={() => setShowNewH2H(!showNewH2H)} className="flex items-center gap-2 px-3 py-1.5 bg-neon-purple/10 border border-neon-purple/30 text-neon-purple text-xs font-mono rounded hover:bg-neon-purple/20 transition-all">
+                <Plus size={13} />NEW EVENT
+              </button>
+            </div>
+
+            {showNewH2H && (
+              <div className="race-card p-5 border-neon-purple/20 space-y-3">
+                <p className="section-label">CREATE H2H EVENT</p>
+                <input className="input-field" placeholder="Event name" value={newH2H.name} onChange={(e) => setNewH2H((p) => ({ ...p, name: e.target.value }))} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="section-label block mb-1">START DATE</label><input type="date" className="input-field" value={newH2H.start_date} onChange={(e) => setNewH2H((p) => ({ ...p, start_date: e.target.value }))} /></div>
+                  <div><label className="section-label block mb-1">END DATE</label><input type="date" className="input-field" value={newH2H.end_date} onChange={(e) => setNewH2H((p) => ({ ...p, end_date: e.target.value }))} /></div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="section-label block mb-1">WIN POINTS</label>
+                    <input type="number" className="input-field" value={newH2H.points_win} onChange={(e) => setNewH2H((p) => ({ ...p, points_win: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="section-label block mb-1">DEFAULT CAR (fallback)</label>
+                    <select className="input-field" value={newH2H.default_car_id} onChange={(e) => setNewH2H((p) => ({ ...p, default_car_id: e.target.value }))}>
+                      <option value="">— NONE —</option>
+                      {cars.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="section-label block mb-1">DEFAULT TRACK (fallback)</label>
+                    <select className="input-field" value={newH2H.default_track_id} onChange={(e) => setNewH2H((p) => ({ ...p, default_track_id: e.target.value }))}>
+                      <option value="">— NONE —</option>
+                      {tracks.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <p className="text-race-dim/60 text-xs font-mono">Default car/track is used for pairs with no shared combos. Leave blank to skip those pairs.</p>
+                <div className="flex gap-2">
+                  <button onClick={createH2HEvent} disabled={!newH2H.name || !newH2H.start_date || !newH2H.end_date || loading === "new-h2h"} className="flex-1 py-2.5 bg-neon-purple hover:bg-neon-purple-dark disabled:opacity-50 text-white text-xs font-mono font-bold tracking-widest rounded-lg transition-all">
+                    {loading === "new-h2h" ? "CREATING..." : "CREATE EVENT"}
+                  </button>
+                  <button onClick={() => setShowNewH2H(false)} className="px-4 py-2.5 border border-race-border text-race-dim text-xs font-mono rounded-lg hover:text-race-text transition-colors">CANCEL</button>
+                </div>
+              </div>
+            )}
+
+            <div className="race-card overflow-hidden">
+              {h2hEvents.length === 0 ? (
+                <div className="p-8 text-center text-race-dim font-mono text-sm">NO H2H EVENTS YET</div>
+              ) : h2hEvents.map((ev) => (
+                <div key={ev.id} className="flex items-center gap-4 px-5 py-4 border-b border-race-border/40 last:border-0 hover:bg-race-muted/20 transition-colors">
+                  <Swords size={16} className="text-neon-purple flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-race-text">{ev.name}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                        ev.status === "active" ? "bg-neon-green/10 text-neon-green border-neon-green/20" :
+                        ev.status === "completed" ? "bg-race-muted text-race-dim border-race-border" :
+                        "bg-yellow-400/10 text-yellow-400 border-yellow-400/20"
+                      }`}>{ev.status.toUpperCase()}</span>
+                    </div>
+                    <p className="text-race-dim text-xs font-mono">{ev.start_date} → {ev.end_date} · +{ev.points_win} pts for win</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {ev.status === "pending" && (
+                      <button onClick={() => generateH2H(ev.id)} disabled={!!loading} className="px-3 py-1.5 bg-neon-purple/10 border border-neon-purple/30 text-neon-purple text-xs font-mono rounded hover:bg-neon-purple/20 transition-all">
+                        {loading === `gen-${ev.id}` ? "..." : "⚡ GENERATE PAIRS"}
+                      </button>
+                    )}
+                    {ev.status === "active" && (
+                      <button onClick={() => finalizeH2H(ev.id)} disabled={!!loading} className="px-3 py-1.5 bg-neon-green/10 border border-neon-green/30 text-neon-green text-xs font-mono rounded hover:bg-neon-green/20 transition-all">
+                        {loading === `fin-${ev.id}` ? "..." : "🏁 FINALIZE & AWARD"}
+                      </button>
+                    )}
+                    <button onClick={() => deleteH2H(ev.id)} disabled={!!loading} className="p-2 text-race-dim hover:text-red-400 transition-colors">
+                      {loading === `del-h2h-${ev.id}` ? "..." : <Trash2 size={14} />}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
