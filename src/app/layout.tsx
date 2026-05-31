@@ -37,17 +37,18 @@ export default async function RootLayout({
   let isAdmin = false;
   let isPro = false;
   let driverSlug: string | undefined;
+  let lapCount: number | undefined;
   if (user) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("is_admin, is_pro, driver_name")
-      .eq("id", user.id)
-      .single();
-    isAdmin = profile?.is_admin ?? false;
-    isPro = profile?.is_pro ?? false;
-    if (profile?.driver_name) {
-      driverSlug = profile.driver_name.toLowerCase().replace(/\s+/g, "-");
+    const [profileRes, lapCountRes] = await Promise.all([
+      supabase.from("users").select("is_admin, is_pro, driver_name").eq("id", user.id).single(),
+      supabase.from("lap_times").select("id", { count: "exact", head: true }).eq("driver_id", user.id),
+    ]);
+    isAdmin = profileRes.data?.is_admin ?? false;
+    isPro = profileRes.data?.is_pro ?? false;
+    if (profileRes.data?.driver_name) {
+      driverSlug = profileRes.data.driver_name.toLowerCase().replace(/\s+/g, "-");
     }
+    lapCount = lapCountRes.count ?? 0;
   }
 
   return (
@@ -59,7 +60,7 @@ export default async function RootLayout({
         </div>
         <div className="relative z-10">
           <LiveTicker />
-          <Navbar isAdmin={isAdmin} isPro={isPro} driverSlug={driverSlug} />
+          <Navbar isAdmin={isAdmin} isPro={isPro} driverSlug={driverSlug} lapCount={lapCount} />
           <main className="min-h-screen">{children}</main>
           <footer className="border-t border-race-border mt-20 py-8 px-6">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">

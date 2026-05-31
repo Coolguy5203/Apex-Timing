@@ -15,6 +15,7 @@ interface NavbarProps {
   isAdmin?: boolean;
   isPro?: boolean;
   driverSlug?: string;
+  lapCount?: number;
 }
 
 const navLinks = [
@@ -28,7 +29,7 @@ const navLinks = [
   { href: "/submit",        label: "SUBMIT",       icon: Flag    },
 ];
 
-export function Navbar({ isAdmin = false, isPro = false, driverSlug }: NavbarProps) {
+export function Navbar({ isAdmin = false, isPro = false, driverSlug, lapCount }: NavbarProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<any>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -164,6 +165,12 @@ export function Navbar({ isAdmin = false, isPro = false, driverSlug }: NavbarPro
                       className="absolute right-0 top-10 w-44 rounded-xl border border-race-border shadow-2xl z-50 overflow-hidden py-1"
                       style={{ background: "#0f0f18", boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(184,79,255,0.1)" }}
                     >
+                      {lapCount !== undefined && (
+                        <div className="px-4 py-2 border-b border-race-border/50 flex items-center justify-between">
+                          <span className="text-race-dim text-[10px] font-mono tracking-widest">LAPS LOGGED</span>
+                          <span className="text-neon-purple text-xs font-mono font-bold">{lapCount}</span>
+                        </div>
+                      )}
                       {driverSlug && (
                         <Link
                           href={`/driver/${driverSlug}`}
@@ -263,7 +270,12 @@ export function Navbar({ isAdmin = false, isPro = false, driverSlug }: NavbarPro
             <div className="pt-3 border-t border-race-border mt-3 space-y-1">
               {user ? (
                 <>
-                  <div className="px-4 py-2 text-xs font-mono text-race-dim">{user.email}</div>
+                  <div className="px-4 py-2 flex items-center justify-between">
+                    <span className="text-xs font-mono text-race-dim truncate">{user.email}</span>
+                    {lapCount !== undefined && (
+                      <span className="text-neon-purple text-xs font-mono font-bold ml-2 flex-shrink-0">{lapCount} laps</span>
+                    )}
+                  </div>
                   {driverSlug && (
                     <Link href={`/driver/${driverSlug}`} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-race-dim hover:text-race-text hover:bg-race-muted rounded transition-colors">
                       <User size={16} />MY PROFILE
