@@ -4,6 +4,7 @@ import { formatLapTime, formatRelativeTime } from "@/utils/lapTime";
 import { Users, Trophy, Timer, Zap, Car, MapPin, Medal, Activity, Lock } from "lucide-react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Badge } from "@/components/ui/Badge";
+import { TeamSettings } from "@/components/team/TeamSettings";
 
 async function getTeamData(currentUserId: string, teamName: string | null) {
   const supabase = await createClient();
@@ -78,6 +79,18 @@ export default async function TeamPage() {
 
   const teamName = profile?.team_name || null;
   const { drivers, recentActivity, stats } = await getTeamData(user.id, teamName);
+
+  // Fetch existing invite code for this team (if any)
+  let existingInviteCode: string | null = null;
+  if (teamName) {
+    const supabaseServer = await createClient();
+    const { data: invite } = await supabaseServer
+      .from("team_invites")
+      .select("invite_code")
+      .eq("team_name", teamName)
+      .single();
+    existingInviteCode = invite?.invite_code ?? null;
+  }
 
   return (
     <div className="grid-bg min-h-screen">
@@ -238,6 +251,13 @@ export default async function TeamPage() {
 
           {/* Right column */}
           <div className="space-y-6">
+            {/* Team Settings */}
+            <TeamSettings
+              userId={user.id}
+              teamName={teamName}
+              existingInviteCode={existingInviteCode}
+            />
+
             {/* Team Best Laps */}
             <div className="race-card p-6">
               <SectionHeader title="BEST LAPS" subtitle="Fastest per driver" icon={Trophy} />
