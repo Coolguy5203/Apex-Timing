@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag, Medal } from "lucide-react";
 import { LapTrends } from "@/components/driver/LapTrends";
+import { LapActivityChart } from "@/components/driver/LapActivityChart";
 import { getStreakInfo } from "@/lib/supabase/queries";
 import { StreakDisplay } from "@/components/ui/StreakDisplay";
 import { AchievementGrid } from "@/components/achievements/AchievementGrid";
@@ -270,6 +271,10 @@ export default async function DriverPage({ params }: DriverPageProps) {
 
         <div className="mb-6">
           <LapTrends laps={lapHistory} />
+        </div>
+
+        <div className="mb-6">
+          <LapActivityChart laps={lapHistory} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

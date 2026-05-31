@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "APEX TIMING | iRacing Lap Tracker",
   description: "Professional lap time tracking and leaderboards for iRacing teams",
+  manifest: "/manifest.json",
   icons: {
     icon: "/favicon.svg",
     apple: "/apple-touch-icon.svg",
@@ -15,6 +16,13 @@ export const metadata: Metadata = {
     title: "APEX TIMING | iRacing Lap Tracker",
     description: "Track lap times and dominate the leaderboard with your iRacing team",
     images: ["/og-image.svg"],
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "apple-mobile-web-app-title": "APEX TIMING",
+    "theme-color": "#b84fff",
   },
 };
 

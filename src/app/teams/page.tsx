@@ -90,7 +90,7 @@ export default async function TeamsPage() {
                 return (
                   <Link
                     key={team.team_name}
-                    href={`/team`}
+                    href={`/teams/${encodeURIComponent(team.team_name.toLowerCase().replace(/\s+/g, "-"))}`}
                     className="race-card p-5 flex flex-col md:grid md:grid-cols-[auto_1fr_auto_auto_auto_auto] md:gap-4 md:items-center hover:border-neon-purple/30 hover:bg-neon-purple/5 transition-all block group"
                   >
                     {/* Rank */}
