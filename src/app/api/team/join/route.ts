@@ -13,11 +13,20 @@ export async function POST(req: Request) {
   // Look up the invite
   const { data: invite } = await supabase
     .from("team_invites")
-    .select("team_name")
+    .select("team_name, created_at")
     .eq("invite_code", code.trim().toUpperCase())
     .single();
 
   if (!invite) return NextResponse.json({ error: "Invalid invite code" }, { status: 404 });
+
+  // Expire codes older than 7 days
+  if (invite.created_at) {
+    const ageMs = Date.now() - new Date(invite.created_at).getTime();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    if (ageMs > sevenDaysMs) {
+      return NextResponse.json({ error: "This invite code has expired. Ask your Race Director to generate a new one." }, { status: 410 });
+    }
+  }
 
   // Update the user's team
   const { error } = await supabase

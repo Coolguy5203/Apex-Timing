@@ -4,11 +4,12 @@ import { formatRelativeTime } from "@/utils/lapTime";
 import type { LeaderboardEntry } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
-import { Zap, AlertTriangle, Plus } from "lucide-react";
+import { Zap, AlertTriangle, Plus, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
+  currentUserId?: string;
 }
 
 const rankStyles: Record<number, { rank: string; bg: string; border: string }> = {
@@ -21,7 +22,10 @@ function getRankStyle(rank: number) {
   return rankStyles[rank] || { rank: "text-race-dim", bg: "", border: "border-l-2 border-l-transparent" };
 }
 
-export function LeaderboardTable({ entries }: LeaderboardTableProps) {
+export function LeaderboardTable({ entries, currentUserId }: LeaderboardTableProps) {
+  const myEntry = currentUserId ? entries.find((e) => e.driver_id === currentUserId) : undefined;
+  const myEntryVisible = !!myEntry; // already in the list
+  const myRank = myEntry?.rank;
   if (entries.length === 0) {
     return (
       <div className="text-center py-20 px-4">
@@ -61,12 +65,13 @@ export function LeaderboardTable({ entries }: LeaderboardTableProps) {
       <div>
         {entries.map((entry, index) => {
           const style = getRankStyle(entry.rank);
+          const isMe = currentUserId && entry.driver_id === currentUserId;
           return (
             <div
               key={`${entry.driver_id}-${entry.car_id}-${entry.track_id}`}
               className={clsx(
                 "leaderboard-row grid grid-cols-[auto_1fr_auto_auto_auto] md:grid-cols-[auto_1fr_1fr_1fr_auto_auto_auto] gap-0 border-b border-race-border/40 items-center",
-                style.bg, style.border
+                isMe ? "bg-neon-purple/5 border-l-2 border-l-neon-purple" : clsx(style.bg, style.border)
               )}
               style={{ animationDelay: `${index * 40}ms` }}
             >
@@ -79,6 +84,7 @@ export function LeaderboardTable({ entries }: LeaderboardTableProps) {
                  <Link href={`/driver/${encodeURIComponent(entry.driver_name.toLowerCase().replace(/\s+/g, "-"))}`} className="font-display font-bold text-race-text tracking-wide text-sm hover:text-neon-purple transition-colors">
                     {entry.driver_name.toUpperCase()}
                   </Link>
+                  {isMe && <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-neon-purple/10 border border-neon-purple/30 text-neon-purple">YOU</span>}
                 </div>
                 <div className="md:hidden mt-0.5">
                   <span className="text-race-dim text-xs font-mono">{entry.car_name}</span>
@@ -106,6 +112,11 @@ export function LeaderboardTable({ entries }: LeaderboardTableProps) {
                       <AlertTriangle size={13} className="text-yellow-400 flex-shrink-0" />
                     </span>
                   )}
+                  {entry.validation_status === "approved" && (
+                    <span title="Admin verified">
+                      <ShieldCheck size={13} className="text-neon-green flex-shrink-0" />
+                    </span>
+                  )}
                   <span className={clsx("font-mono font-bold", entry.is_fastest ? "lap-time-fastest text-lg" : "text-race-text text-base")}>
                     {entry.lap_time_formatted}
                   </span>
@@ -117,6 +128,15 @@ export function LeaderboardTable({ entries }: LeaderboardTableProps) {
             </div>
           );
         })}
+
+        {/* YOUR POSITION — shown when the current user is not in the visible list */}
+        {currentUserId && !myEntryVisible && myRank === undefined && (
+          <div className="border-t-2 border-dashed border-neon-purple/20 bg-neon-purple/5 px-4 py-3 flex items-center gap-3">
+            <span className="text-neon-purple text-xs font-mono font-bold tracking-widest">YOUR POSITION</span>
+            <span className="text-race-dim text-xs font-mono">Submit a lap to appear on this leaderboard</span>
+            <Link href="/submit" className="ml-auto text-xs font-mono text-neon-purple hover:underline">SUBMIT →</Link>
+          </div>
+        )}
       </div>
     </div>
   );

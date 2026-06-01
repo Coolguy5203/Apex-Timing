@@ -4,12 +4,13 @@ import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
 import { LeaderboardFilters } from "@/components/leaderboard/LeaderboardFilters";
 import { PageLoader } from "@/components/ui/LoadingSpinner";
 import { Trophy, Zap } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
 interface LeaderboardPageProps {
   searchParams: Promise<{ car?: string; track?: string; class?: string }>;
 }
 
-async function LeaderboardContent({ carId, trackId, carClass }: { carId?: string; trackId?: string; carClass?: string }) {
+async function LeaderboardContent({ carId, trackId, carClass, currentUserId }: { carId?: string; trackId?: string; carClass?: string; currentUserId?: string }) {
   const [entries, cars, tracks, classes] = await Promise.all([
     getLeaderboard(carId, trackId, carClass),
     getCars(),
@@ -63,7 +64,7 @@ async function LeaderboardContent({ carId, trackId, carClass }: { carId?: string
             </div>
           </div>
         )}
-        <LeaderboardTable entries={entries} />
+        <LeaderboardTable entries={entries} currentUserId={currentUserId} />
       </div>
     </div>
   );
@@ -74,6 +75,9 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
   const carId = params.car;
   const trackId = params.track;
   const carClass = params.class;
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <div className="grid-bg min-h-screen">
@@ -90,7 +94,7 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
           </div>
         </div>
         <Suspense fallback={<PageLoader />}>
-          <LeaderboardContent carId={carId} trackId={trackId} carClass={carClass} />
+          <LeaderboardContent carId={carId} trackId={trackId} carClass={carClass} currentUserId={user?.id} />
         </Suspense>
       </div>
     </div>

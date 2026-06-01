@@ -40,12 +40,15 @@ export default async function RootLayout({
   let lapCount: number | undefined;
   if (user) {
     const [profileRes, lapCountRes] = await Promise.all([
-      supabase.from("users").select("is_admin, is_pro, driver_name").eq("id", user.id).single(),
+      supabase.from("users").select("is_admin, is_pro, driver_name, driver_slug").eq("id", user.id).single(),
       supabase.from("lap_times").select("id", { count: "exact", head: true }).eq("driver_id", user.id),
     ]);
     isAdmin = profileRes.data?.is_admin ?? false;
     isPro = profileRes.data?.is_pro ?? false;
-    if (profileRes.data?.driver_name) {
+    // Use stable driver_slug if set, otherwise fall back to name-derived slug
+    if (profileRes.data?.driver_slug) {
+      driverSlug = profileRes.data.driver_slug;
+    } else if (profileRes.data?.driver_name) {
       driverSlug = profileRes.data.driver_name.toLowerCase().replace(/\s+/g, "-");
     }
     lapCount = lapCountRes.count ?? 0;
@@ -74,6 +77,7 @@ export default async function RootLayout({
                 <nav className="flex flex-wrap justify-center gap-x-5 gap-y-1">
                   {[
                     { href: "/leaderboard", label: "LEADERBOARD" },
+                    { href: "/records", label: "RECORDS" },
                     { href: "/championship", label: "CHAMPIONSHIP" },
                     { href: "/teams", label: "TEAMS" },
                     { href: "/search", label: "SEARCH" },

@@ -192,11 +192,12 @@ export function TeamRoster({ drivers, currentUserId, currentUserRank }: TeamRost
             )}
 
             {/* Lap count (right side) */}
-            <div className="flex-shrink-0 text-right hidden sm:block">
+            <div className="flex-shrink-0 text-right">
               <div className={`text-2xl font-display font-black ${index === 0 ? "text-neon-purple" : "text-race-text"}`}>
                 {driver.lap_count}
               </div>
               <div className="text-race-dim text-xs font-mono">LAPS</div>
+              <div className="text-race-dim/50 text-[10px] font-mono mt-0.5 hidden sm:block">{formatRelativeTime(driver.last_active)}</div>
             </div>
           </div>
         );

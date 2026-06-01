@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   Trophy, Flag, LogIn, LogOut, Menu, X, User, Users,
-  Zap, Shield, Star, Settings, Target, Swords, Medal, ChevronDown, Award, Search, GitBranch
+  Zap, Shield, Star, Settings, Target, Swords, Medal, ChevronDown, Award, Search, Timer, GitBranch, Car
 } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import clsx from "clsx";
@@ -182,6 +182,13 @@ export function Navbar({ isAdmin = false, isPro = false, driverSlug, lapCount }:
                         </Link>
                       )}
                       <Link
+                        href="/laps"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-mono text-race-dim hover:text-race-text hover:bg-race-muted transition-colors"
+                      >
+                        <Timer size={12} />MY SUBMISSIONS
+                      </Link>
+                      <Link
                         href="/settings"
                         onClick={() => setUserMenuOpen(false)}
                         className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-mono text-race-dim hover:text-race-text hover:bg-race-muted transition-colors"
@@ -282,6 +289,9 @@ export function Navbar({ isAdmin = false, isPro = false, driverSlug, lapCount }:
                       <User size={16} />MY PROFILE
                     </Link>
                   )}
+                  <Link href="/laps" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-race-dim hover:text-race-text hover:bg-race-muted rounded transition-colors">
+                    <Timer size={16} />MY SUBMISSIONS
+                  </Link>
                   <Link href="/pro" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-race-dim hover:text-race-text hover:bg-race-muted rounded transition-colors">
                     <Zap size={16} className="text-yellow-400" />PRO
                   </Link>

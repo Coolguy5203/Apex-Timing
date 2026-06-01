@@ -52,10 +52,12 @@ export default function AuthPage() {
         if (signUpError) throw signUpError;
 
        if (data.user) {
+          const driverSlug = formData.driver_name.trim().toLowerCase().replace(/\s+/g, "-");
           await supabase.from("users").upsert({
             id: data.user.id,
             email: formData.email,
             driver_name: formData.driver_name.trim(),
+            driver_slug: driverSlug,
             team_name: formData.team_name.trim() || null,
             team_code: formData.team_name.trim()
               ? formData.team_name.trim().toLowerCase().replace(/\s+/g, "-")

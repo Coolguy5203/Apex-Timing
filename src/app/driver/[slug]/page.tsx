@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatRelativeTime } from "@/utils/lapTime";
 import { Badge } from "@/components/ui/Badge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag, Medal } from "lucide-react";
+import { Trophy, Timer, Car, MapPin, Zap, Star, Calendar, ChevronLeft, Flag, Medal, ShieldCheck } from "lucide-react";
 import { LapTrends } from "@/components/driver/LapTrends";
 import { LapActivityChart } from "@/components/driver/LapActivityChart";
 import { getStreakInfo } from "@/lib/supabase/queries";
@@ -18,13 +18,24 @@ interface DriverPageProps {
 
 async function getDriverData(slug: string) {
   const supabase = await createClient();
-  const driverName = decodeURIComponent(slug).replace(/-/g, " ");
+  const decodedSlug = decodeURIComponent(slug).toLowerCase();
 
-  const { data: driver } = await supabase
+  // Look up by stable driver_slug first (survives renames), fall back to name-based match
+  let { data: driver } = await supabase
     .from("users")
     .select("*")
-    .ilike("driver_name", driverName)
-    .single();
+    .eq("driver_slug", decodedSlug)
+    .maybeSingle();
+
+  if (!driver) {
+    const driverName = decodedSlug.replace(/-/g, " ");
+    const { data: fallback } = await supabase
+      .from("users")
+      .select("*")
+      .ilike("driver_name", driverName)
+      .maybeSingle();
+    driver = fallback;
+  }
 
   if (!driver) return null;
 
@@ -117,6 +128,24 @@ async function getDriverData(slug: string) {
     userAchievements: achRes.data || [],
     allAchievements: allAchRes.data || [],
     stats: { totalLaps, totalSessionLaps, uniqueCars, uniqueTracks, overallBest, favouriteCar, favouriteTrack },
+  };
+}
+
+export async function generateMetadata({ params }: DriverPageProps) {
+  const { slug } = await params;
+  const data = await getDriverData(slug);
+  if (!data) return {};
+  const { driver, stats } = data;
+  const ogUrl = `/api/og/driver?slug=${encodeURIComponent(driver.driver_slug ?? slug)}`;
+  return {
+    title: `${driver.driver_name} | APEX TIMING`,
+    description: `${driver.driver_name}'s iRacing lap times — ${stats.totalLaps} laps posted, ${data.personalBests.length} track records`,
+    openGraph: {
+      title: `${driver.driver_name} | APEX TIMING`,
+      description: `${stats.totalLaps} laps · ${data.personalBests.length} track records`,
+      images: [{ url: ogUrl, width: 1200, height: 630 }],
+    },
+    twitter: { card: "summary_large_image", images: [ogUrl] },
   };
 }
 
@@ -334,6 +363,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
                   const car = lap.cars as any;
                   const track = lap.tracks as any;
                   const isFlagged = (lap as any).validation_status === "flagged";
+                  const isApproved = (lap as any).validation_status === "approved";
                   return (
                     <div key={lap.id} className="pb-3 border-b border-race-border/50 last:border-0 last:pb-0">
                       <div className="flex items-start justify-between gap-2">
@@ -342,7 +372,10 @@ export default async function DriverPage({ params }: DriverPageProps) {
                           <p className="text-race-dim text-xs font-mono flex items-center gap-1 mt-0.5"><MapPin size={9} /><span className="truncate">{track.name}</span></p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className={`text-sm font-mono font-bold ${isFlagged ? "text-yellow-400/70" : "text-neon-purple"}`}>{lap.lap_time_formatted}</p>
+                          <div className="flex items-center justify-end gap-1">
+                            {isApproved && <ShieldCheck size={11} className="text-neon-green" title="Admin verified" />}
+                            <p className={`text-sm font-mono font-bold ${isFlagged ? "text-yellow-400/70" : isApproved ? "text-neon-green" : "text-neon-purple"}`}>{lap.lap_time_formatted}</p>
+                          </div>
                           <p className="text-race-dim text-xs font-mono">{formatRelativeTime(lap.submitted_at)}</p>
                         </div>
                       </div>
