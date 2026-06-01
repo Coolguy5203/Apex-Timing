@@ -16,13 +16,15 @@ interface SubmitLapFormProps {
   userId: string;
   driverName: string;
   teamName?: string;
+  defaultCarId?: string;
+  defaultTrackId?: string;
 }
 
-export function SubmitLapForm({ cars, tracks, userId, driverName, teamName }: SubmitLapFormProps) {
+export function SubmitLapForm({ cars, tracks, userId, driverName, teamName, defaultCarId, defaultTrackId }: SubmitLapFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    car_id: "",
-    track_id: "",
+    car_id: defaultCarId ?? "",
+    track_id: defaultTrackId ?? "",
     lap_time: "",
     notes: "",
     laps_in_session: "",

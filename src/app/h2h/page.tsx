@@ -225,11 +225,11 @@ export default async function H2HPage() {
                 {myMatchup.car_id && myMatchup.track_id && activeEvent.status === "active" && (
                   <div className="mt-2 text-center">
                     <Link
-                      href="/submit"
+                      href={`/submit?car=${myMatchup.car_id}&track=${myMatchup.track_id}&h2h=1`}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-neon-purple hover:bg-neon-purple-dark text-white text-xs font-mono font-bold tracking-widest rounded-lg transition-all"
                       style={{ boxShadow: "0 0 20px rgba(184,79,255,0.25)" }}
                     >
-                      SUBMIT YOUR LAP
+                      <Swords size={13} />SUBMIT YOUR LAP
                     </Link>
                   </div>
                 )}

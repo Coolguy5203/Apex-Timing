@@ -2,9 +2,18 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCars, getTracks } from "@/lib/supabase/queries";
 import { SubmitLapForm } from "@/components/forms/SubmitLapForm";
-import { Flag, Info } from "lucide-react";
+import { Flag, Info, Swords } from "lucide-react";
 
-export default async function SubmitPage() {
+interface SubmitPageProps {
+  searchParams: Promise<{ car?: string; track?: string; h2h?: string }>;
+}
+
+export default async function SubmitPage({ searchParams }: SubmitPageProps) {
+  const params = await searchParams;
+  const defaultCarId = params.car;
+  const defaultTrackId = params.track;
+  const isH2H = params.h2h === "1";
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -53,12 +62,24 @@ const [cars, tracks] = await Promise.all([getCars(isPro), getTracks(isPro)]);
           </div>
         </div>
 
+        {isH2H && (
+          <div className="mb-6 flex items-start gap-3 px-4 py-3 bg-neon-purple/10 border border-neon-purple/30 rounded-lg">
+            <Swords size={16} className="text-neon-purple flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-neon-purple text-xs font-mono font-bold tracking-widest">H2H MATCHUP SUBMISSION</p>
+              <p className="text-race-dim text-xs font-mono mt-0.5">The car and track below are pre-filled for your assigned matchup. Submit your best lap on this exact combo.</p>
+            </div>
+          </div>
+        )}
+
         <SubmitLapForm
           cars={cars}
           tracks={tracks}
           userId={user.id}
           driverName={profile?.driver_name ?? user.email?.split("@")[0] ?? "Driver"}
           teamName={profile?.team_name ?? undefined}
+          defaultCarId={defaultCarId}
+          defaultTrackId={defaultTrackId}
         />
 
         <div className="mt-6 p-4 bg-race-card border border-race-border rounded-lg">
