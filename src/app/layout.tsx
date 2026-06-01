@@ -63,14 +63,29 @@ export default async function RootLayout({
           <Navbar isAdmin={isAdmin} isPro={isPro} driverSlug={driverSlug} lapCount={lapCount} />
           <main className="min-h-screen">{children}</main>
           <footer className="border-t border-race-border mt-20 py-8 px-6">
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-3">
-                <span className="text-neon-purple font-display text-xl font-bold tracking-wider">
-                  APEX TIMING
-                </span>
-                <span className="text-race-dim text-xs font-mono">v1.0.0</span>
+            <div className="max-w-7xl mx-auto space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-neon-purple font-display text-xl font-bold tracking-wider">
+                    APEX TIMING
+                  </span>
+                  <span className="text-race-dim text-xs font-mono">v1.0.0</span>
+                </div>
+                <nav className="flex flex-wrap justify-center gap-x-5 gap-y-1">
+                  {[
+                    { href: "/leaderboard", label: "LEADERBOARD" },
+                    { href: "/championship", label: "CHAMPIONSHIP" },
+                    { href: "/teams", label: "TEAMS" },
+                    { href: "/search", label: "SEARCH" },
+                    { href: "/submit", label: "SUBMIT LAP" },
+                  ].map(({ href, label }) => (
+                    <a key={href} href={href} className="text-race-dim hover:text-race-text text-xs font-mono tracking-wider transition-colors">
+                      {label}
+                    </a>
+                  ))}
+                </nav>
               </div>
-              <p className="text-race-dim text-xs font-mono">
+              <p className="text-race-dim/50 text-xs font-mono text-center">
                 © 2025 APEX TIMING. FOR IRACING USE ONLY. NOT AFFILIATED WITH iRACING.COM
               </p>
             </div>

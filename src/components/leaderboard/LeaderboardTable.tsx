@@ -4,7 +4,7 @@ import { formatRelativeTime } from "@/utils/lapTime";
 import type { LeaderboardEntry } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import clsx from "clsx";
-import { Zap, AlertTriangle } from "lucide-react";
+import { Zap, AlertTriangle, Plus } from "lucide-react";
 import Link from "next/link";
 
 interface LeaderboardTableProps {
@@ -24,10 +24,19 @@ function getRankStyle(rank: number) {
 export function LeaderboardTable({ entries }: LeaderboardTableProps) {
   if (entries.length === 0) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-20 px-4">
         <div className="text-5xl mb-4">🏁</div>
         <p className="text-race-dim font-mono text-sm tracking-widest">NO TIMES SET</p>
-        <p className="text-race-dim/60 font-mono text-xs mt-2">Select a car and track combination to see results</p>
+        <p className="text-race-dim/60 font-mono text-xs mt-2 mb-6">
+          Be the first to post a time on this combination
+        </p>
+        <Link
+          href="/submit"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-neon-purple/10 hover:bg-neon-purple/20 border border-neon-purple/30 hover:border-neon-purple/50 text-neon-purple font-mono font-bold text-xs tracking-widest rounded-lg transition-all"
+        >
+          <Plus size={13} />
+          SUBMIT A LAP
+        </Link>
       </div>
     );
   }

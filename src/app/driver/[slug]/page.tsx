@@ -333,6 +333,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
                 {recentActivity.map((lap) => {
                   const car = lap.cars as any;
                   const track = lap.tracks as any;
+                  const isFlagged = (lap as any).validation_status === "flagged";
                   return (
                     <div key={lap.id} className="pb-3 border-b border-race-border/50 last:border-0 last:pb-0">
                       <div className="flex items-start justify-between gap-2">
@@ -341,10 +342,17 @@ export default async function DriverPage({ params }: DriverPageProps) {
                           <p className="text-race-dim text-xs font-mono flex items-center gap-1 mt-0.5"><MapPin size={9} /><span className="truncate">{track.name}</span></p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="text-neon-purple text-sm font-mono font-bold">{lap.lap_time_formatted}</p>
+                          <p className={`text-sm font-mono font-bold ${isFlagged ? "text-yellow-400/70" : "text-neon-purple"}`}>{lap.lap_time_formatted}</p>
                           <p className="text-race-dim text-xs font-mono">{formatRelativeTime(lap.submitted_at)}</p>
                         </div>
                       </div>
+                      {isOwnProfile && isFlagged && (
+                        <div className="flex items-center gap-1 mt-1.5 px-2 py-1 bg-yellow-400/5 border border-yellow-400/20 rounded text-yellow-400 text-[10px] font-mono">
+                          <span>⚠</span>
+                          <span className="font-bold">UNDER REVIEW</span>
+                          <span className="text-yellow-400/60 ml-1">· hidden from rankings</span>
+                        </div>
+                      )}
                       {lap.notes && <p className="text-race-dim/60 text-xs font-mono mt-1 italic truncate">"{lap.notes}"</p>}
                     </div>
                   );

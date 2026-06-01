@@ -12,16 +12,20 @@ export function ShareButton({ url, title }: Props) {
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
+    // Build an absolute URL — if the prop is already absolute use it,
+    // otherwise prepend the current origin (works without NEXT_PUBLIC_SITE_URL)
+    const absoluteUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
+
     // Try native share sheet first (mobile)
     if (navigator.share) {
       try {
-        await navigator.share({ title: title ?? "APEX TIMING", url });
+        await navigator.share({ title: title ?? "APEX TIMING", url: absoluteUrl });
         return;
       } catch {}
     }
     // Fallback: copy to clipboard
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(absoluteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {}
