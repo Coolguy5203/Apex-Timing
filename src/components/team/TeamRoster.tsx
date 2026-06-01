@@ -37,7 +37,11 @@ export function TeamRoster({ drivers, currentUserId, currentUserRank }: TeamRost
     setTimeout(() => setMessage(null), 5000);
   };
 
-  const changeRank = async (targetId: string, newRank: number) => {
+  const changeRank = async (targetId: string, newRank: number, targetName: string) => {
+    // Warn when transferring the RD role — it demotes the current user
+    if (newRank === 2 && currentUserRank === 2) {
+      if (!confirm(`Transfer the 🏁 Race Director role to ${targetName}?\n\nYou will be demoted to Member. This cannot be undone without them transferring it back.`)) return;
+    }
     setLoadingId(targetId);
     setOpenMenu(null);
     try {
@@ -154,26 +158,32 @@ export function TeamRoster({ drivers, currentUserId, currentUserRank }: TeamRost
 
                     {openMenu === driver.id && (
                       <div className="absolute right-0 top-full mt-1 w-44 bg-race-card border border-neon-purple/20 rounded-lg shadow-xl z-20 overflow-hidden">
-                        {RANKS.map((r) => (
-                          <button
-                            key={r.level}
-                            onClick={() => changeRank(driver.id, r.level)}
-                            disabled={r.level === driver.team_rank}
-                            className={clsx(
-                              "w-full flex items-center gap-2 px-3 py-2.5 text-xs font-mono text-left transition-colors",
-                              r.level === driver.team_rank
-                                ? "bg-neon-purple/10 text-neon-purple cursor-default"
-                                : "text-race-dim hover:bg-race-muted hover:text-race-text"
-                            )}
-                          >
-                            <span className="w-4 text-center">{r.insignia}</span>
-                            <span className="flex-1">{r.name}</span>
-                            {r.level === driver.team_rank && <Check size={10} />}
-                            {r.grantsPro && r.level !== driver.team_rank && (
-                              <span className="text-yellow-400/60 text-[9px]">+PRO</span>
-                            )}
-                          </button>
-                        ))}
+                        {RANKS.map((r) => {
+                          const isRDTransfer = r.level === 2 && currentUserRank === 2 && r.level !== driver.team_rank;
+                          return (
+                            <button
+                              key={r.level}
+                              onClick={() => changeRank(driver.id, r.level, driver.driver_name)}
+                              disabled={r.level === driver.team_rank}
+                              className={clsx(
+                                "w-full flex items-center gap-2 px-3 py-2.5 text-xs font-mono text-left transition-colors",
+                                r.level === driver.team_rank
+                                  ? "bg-neon-purple/10 text-neon-purple cursor-default"
+                                  : isRDTransfer
+                                  ? "text-yellow-400 hover:bg-yellow-400/10"
+                                  : "text-race-dim hover:bg-race-muted hover:text-race-text"
+                              )}
+                            >
+                              <span className="w-4 text-center">{r.insignia}</span>
+                              <span className="flex-1">{r.name}</span>
+                              {r.level === driver.team_rank && <Check size={10} />}
+                              {isRDTransfer && <span className="text-yellow-400/60 text-[9px]">TRANSFER</span>}
+                              {r.grantsPro && r.level !== driver.team_rank && !isRDTransfer && (
+                                <span className="text-yellow-400/60 text-[9px]">+PRO</span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </>

@@ -69,11 +69,11 @@ export function TeamSettings({ userId, teamName, existingInviteCode }: TeamSetti
     const supabase = createClient();
     const { error } = await supabase
       .from("users")
-      .update({ team_name: newTeamName.trim() })
+      .update({ team_name: newTeamName.trim(), team_rank: 2 })
       .eq("id", userId);
     if (error) { showMsg("error", error.message); }
     else {
-      showMsg("success", `Team "${newTeamName.trim()}" created!`);
+      showMsg("success", `Team "${newTeamName.trim()}" created! You are the Race Director 🏁`);
       setTimeout(() => { router.refresh(); }, 1200);
     }
     setLoading(null);

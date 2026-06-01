@@ -53,8 +53,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid rank" }, { status: 400 });
     }
 
-    // Check slot limit for the target rank
-    if (rankConfig.maxPerTeam !== null) {
+    // RD transfer: if promoting someone to RD (rank 2), demote the current RD first.
+    // This bypasses the one-per-team slot limit since we're doing a hand-off.
+    const isRDTransfer = new_rank === 2 && actor.team_rank === 2;
+
+    if (!isRDTransfer && rankConfig.maxPerTeam !== null) {
       const { count } = await supabase
         .from("users")
         .select("id", { count: "exact", head: true })
@@ -73,6 +76,22 @@ export async function POST(req: Request) {
       .from("users")
       .update({ team_rank: new_rank })
       .eq("id", target.id);
+
+    // If this was an RD transfer, demote the outgoing RD (actor) to Member
+    if (isRDTransfer) {
+      await supabase
+        .from("users")
+        .update({ team_rank: 0 })
+        .eq("id", actor.id);
+
+      await supabase.from("notifications").insert({
+        user_id: actor.id,
+        type: "RANK_CHANGE",
+        title: "Race Director role transferred",
+        message: `You transferred the 🏁 Race Director role to ${target.driver_name}. Your rank is now Member.`,
+        data: { rank: 0, rank_name: "MEMBER" },
+      });
+    }
 
     let proCode: string | null = null;
 
