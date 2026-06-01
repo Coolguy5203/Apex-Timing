@@ -27,6 +27,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; color: string }> = {
   H2H_LOSS:             { icon: <Zap size={14} />,    color: "text-race-dim" },
   CHALLENGE_WIN:        { icon: <Trophy size={14} />, color: "text-neon-green" },
   LAP_FLAGGED:          { icon: <AlertTriangle size={14} />, color: "text-yellow-400" },
+  STREAK_AT_RISK:       { icon: <Flame size={14} />,        color: "text-orange-400" },
 };
 
 export function NotificationBell() {

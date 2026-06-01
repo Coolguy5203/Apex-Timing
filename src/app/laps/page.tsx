@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatLapTime, formatRelativeTime } from "@/utils/lapTime";
-import { Timer, MapPin, ShieldCheck, AlertTriangle, Clock, ChevronLeft } from "lucide-react";
+import { Timer, ChevronLeft } from "lucide-react";
 import Link from "next/link";
-import clsx from "clsx";
+import { LapRow } from "@/components/laps/LapRow";
 
 export default async function MyLapsPage() {
   const supabase = await createClient();
@@ -30,16 +29,10 @@ export default async function MyLapsPage() {
     flagged: allLaps.filter((l) => l.validation_status === "flagged").length,
   };
 
-  const statusConfig = {
-    valid: { label: "VALID", color: "text-race-dim", bg: "bg-race-muted", border: "border-race-border", dot: "bg-race-dim" },
-    approved: { label: "VERIFIED", color: "text-neon-green", bg: "bg-neon-green/10", border: "border-neon-green/30", dot: "bg-neon-green" },
-    flagged: { label: "UNDER REVIEW", color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/30", dot: "bg-yellow-400 animate-pulse" },
-  } as const;
-
   return (
     <div className="grid-bg min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="mb-2">
           <Link href="/" className="inline-flex items-center gap-2 text-race-dim hover:text-race-text text-xs font-mono transition-colors">
             <ChevronLeft size={14} />BACK
           </Link>
@@ -82,64 +75,32 @@ export default async function MyLapsPage() {
         ) : (
           <div className="race-card overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3 bg-race-dark border-b border-race-border text-xs font-mono text-race-dim tracking-widest">
-              <div>CAR · CIRCUIT</div>
-              <div className="hidden sm:block text-right">SESSION LAPS</div>
-              <div className="text-right">TIME</div>
-              <div className="text-right">STATUS</div>
+            <div className="grid grid-cols-[1fr_auto] gap-2 px-5 py-3 bg-race-dark border-b border-race-border">
+              <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_auto_auto_auto] gap-4 text-xs font-mono text-race-dim tracking-widest">
+                <div>CAR · CIRCUIT</div>
+                <div className="hidden sm:block text-right">SESSION LAPS</div>
+                <div className="text-right">TIME</div>
+                <div className="text-right">STATUS</div>
+              </div>
+              <div className="w-8" />
             </div>
 
-            {allLaps.map((lap) => {
-              const car = lap.cars as any;
-              const track = lap.tracks as any;
-              const status = (lap.validation_status as keyof typeof statusConfig) in statusConfig
-                ? (lap.validation_status as keyof typeof statusConfig)
-                : "valid";
-              const cfg = statusConfig[status];
-
-              return (
-                <Link
-                  key={lap.id}
-                  href={`/recap/${lap.id}`}
-                  className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-4 border-b border-race-border/50 last:border-0 items-center hover:bg-race-muted/20 transition-colors group"
-                >
-                  <div className="min-w-0">
-                    <p className="text-race-text text-sm font-mono font-bold truncate group-hover:text-neon-purple transition-colors">{car?.name}</p>
-                    <p className="text-race-dim text-xs font-mono flex items-center gap-1 mt-0.5 truncate">
-                      <MapPin size={9} />{track?.name}
-                    </p>
-                    <p className="text-race-dim/50 text-xs font-mono mt-0.5 flex items-center gap-1">
-                      <Clock size={9} />{formatRelativeTime(lap.submitted_at)}
-                    </p>
-                    {lap.flag_reason && status === "flagged" && (
-                      <p className="text-yellow-400/70 text-[10px] font-mono mt-1 truncate">Reason: {lap.flag_reason}</p>
-                    )}
-                    {lap.notes && (
-                      <p className="text-race-dim/50 text-[10px] font-mono mt-0.5 italic truncate">"{lap.notes}"</p>
-                    )}
-                  </div>
-
-                  <div className="hidden sm:block text-right">
-                    <p className="text-race-dim text-sm font-mono">{(lap as any).laps_in_session ?? "—"}</p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className={clsx("text-sm font-mono font-bold", status === "approved" ? "text-neon-green" : status === "flagged" ? "text-yellow-400/80" : "text-neon-purple")}>
-                      {lap.lap_time_formatted}
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <span className={clsx("inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-mono font-bold border", cfg.bg, cfg.border, cfg.color)}>
-                      <span className={clsx("w-1.5 h-1.5 rounded-full flex-shrink-0", cfg.dot)} />
-                      {status === "approved" && <ShieldCheck size={9} />}
-                      {status === "flagged" && <AlertTriangle size={9} />}
-                      {cfg.label}
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
+            {allLaps.map((lap) => (
+              <LapRow
+                key={lap.id}
+                lap={{
+                  id: lap.id,
+                  lap_time_formatted: lap.lap_time_formatted,
+                  submitted_at: lap.submitted_at,
+                  notes: lap.notes,
+                  validation_status: lap.validation_status,
+                  flag_reason: lap.flag_reason,
+                  laps_in_session: (lap as any).laps_in_session,
+                  car: { name: (lap.cars as any)?.name ?? "Unknown" },
+                  track: { name: (lap.tracks as any)?.name ?? "Unknown" },
+                }}
+              />
+            ))}
           </div>
         )}
       </div>

@@ -42,7 +42,7 @@ async function getH2HData(userId: string | null) {
   // All-time H2H leaderboard
   const { data: leaders } = await supabase
     .from("users")
-    .select("id, driver_name, team_name, h2h_points, h2h_wins")
+    .select("id, driver_name, team_name, h2h_points, h2h_wins, h2h_matchups")
     .gt("h2h_points", 0)
     .order("h2h_points", { ascending: false })
     .limit(20);
@@ -260,27 +260,40 @@ export default async function H2HPage() {
               ALL-TIME H2H STANDINGS
             </h2>
             <div className="race-card overflow-hidden">
-              <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3 bg-race-dark border-b border-race-border text-xs font-mono text-race-dim tracking-widest">
+              <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-5 py-3 bg-race-dark border-b border-race-border text-xs font-mono text-race-dim tracking-widest">
                 <div className="w-6">#</div>
                 <div>DRIVER</div>
                 <div className="w-16 text-center">WINS</div>
+                <div className="w-20 text-center hidden sm:block">WIN RATE</div>
                 <div className="w-16 text-center">POINTS</div>
               </div>
-              {leaders.map((driver, i) => (
-                <div key={driver.id} className={`grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3 border-b border-race-border/50 last:border-0 items-center ${i === 0 ? "bg-yellow-400/5" : "hover:bg-race-muted/20"} transition-colors`}>
-                  <div className="w-6 font-display font-black text-lg text-center">
-                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : <span className="text-race-dim text-sm">{i + 1}</span>}
+              {leaders.map((driver, i) => {
+                const totalMatchups = (driver as any).h2h_matchups ?? driver.h2h_wins; // fallback
+                const winRate = driver.h2h_wins > 0 && totalMatchups > 0
+                  ? Math.round((driver.h2h_wins / totalMatchups) * 100)
+                  : null;
+                return (
+                  <div key={driver.id} className={`grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-5 py-3 border-b border-race-border/50 last:border-0 items-center ${i === 0 ? "bg-yellow-400/5" : "hover:bg-race-muted/20"} transition-colors`}>
+                    <div className="w-6 font-display font-black text-lg text-center">
+                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : <span className="text-race-dim text-sm">{i + 1}</span>}
+                    </div>
+                    <div>
+                      <Link href={`/driver/${driver.driver_name.toLowerCase().replace(/\s+/g, "-")}`} className="font-display font-bold text-race-text hover:text-neon-purple transition-colors tracking-wide">
+                        {driver.driver_name.toUpperCase()}
+                      </Link>
+                      {driver.team_name && <p className="text-race-dim text-xs font-mono">{driver.team_name}</p>}
+                    </div>
+                    <div className="w-16 text-center font-mono font-bold text-race-text">{driver.h2h_wins}</div>
+                    <div className="w-20 text-center hidden sm:block">
+                      {winRate !== null
+                        ? <span className={`font-mono text-sm font-bold ${winRate >= 60 ? "text-neon-green" : winRate >= 40 ? "text-race-dim" : "text-red-400/70"}`}>{winRate}%</span>
+                        : <span className="text-race-dim/40 text-xs font-mono">—</span>
+                      }
+                    </div>
+                    <div className="w-16 text-center font-display font-black text-neon-green text-lg">{driver.h2h_points}</div>
                   </div>
-                  <div>
-                    <Link href={`/driver/${driver.driver_name.toLowerCase().replace(/\s+/g, "-")}`} className="font-display font-bold text-race-text hover:text-neon-purple transition-colors tracking-wide">
-                      {driver.driver_name.toUpperCase()}
-                    </Link>
-                    {driver.team_name && <p className="text-race-dim text-xs font-mono">{driver.team_name}</p>}
-                  </div>
-                  <div className="w-16 text-center font-mono font-bold text-race-text">{driver.h2h_wins}</div>
-                  <div className="w-16 text-center font-display font-black text-neon-green text-lg">{driver.h2h_points}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

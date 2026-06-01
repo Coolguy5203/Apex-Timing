@@ -124,6 +124,15 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
               </div>
               <div className="hidden md:block px-4 py-4 text-right">
                 <span className="text-race-dim text-xs font-mono">{formatRelativeTime(entry.submitted_at)}</span>
+                {!isMe && (
+                  <Link
+                    href={`/submit?car=${entry.car_id}&track=${entry.track_id}`}
+                    className="block text-[10px] font-mono text-race-dim/40 hover:text-neon-purple transition-colors mt-0.5"
+                    title="Submit a lap on this combo"
+                  >
+                    BEAT THIS ↗
+                  </Link>
+                )}
               </div>
             </div>
           );

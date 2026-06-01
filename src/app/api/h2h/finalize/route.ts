@@ -99,6 +99,12 @@ export async function POST(req: Request) {
         finalized: true,
       }).eq("id", matchup.id);
 
+      // Track matchup participation for both drivers (win rate denominator)
+      await Promise.all([
+        supabase.rpc("increment_h2h_matchups", { p_user_id: matchup.driver_a_id }),
+        supabase.rpc("increment_h2h_matchups", { p_user_id: matchup.driver_b_id }),
+      ]);
+
       // Award points
       if (winnerId) {
         await supabase.rpc("increment_h2h_points", {

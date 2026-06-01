@@ -163,6 +163,16 @@ export function SubmitLapForm({ cars, tracks, userId, driverName, teamName, defa
       fetch("/api/achievements/check", { method: "POST" }).catch(() => {});
 
       setSuccess(true);
+      // Retain car/track so back-to-back sessions don't require re-selecting
+      setFormData((prev) => ({
+        ...prev,
+        lap_time: "",
+        notes: "",
+        laps_in_session: "",
+        sector_1: "",
+        sector_2: "",
+        sector_3: "",
+      }));
       setTimeout(() => {
         router.push(newLapId ? `/recap/${newLapId}` : "/leaderboard");
         router.refresh();

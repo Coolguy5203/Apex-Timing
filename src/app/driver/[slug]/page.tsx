@@ -315,9 +315,9 @@ export default async function DriverPage({ params }: DriverPageProps) {
               <div className="p-6 text-center py-12"><p className="text-race-dim font-mono text-sm">NO LAPS POSTED YET</p></div>
             ) : (
               <div>
-                <div className="grid grid-cols-[auto_1fr_auto_auto] border-b border-race-border bg-race-dark px-6 py-3">
-                  {["POS", "CAR · CIRCUIT", "GAP", "TIME"].map((col) => (
-                    <div key={col} className="text-xs font-mono text-race-dim tracking-widest">{col}</div>
+                <div className={`grid border-b border-race-border bg-race-dark px-6 py-3 ${isOwnProfile ? "grid-cols-[auto_1fr_auto_auto]" : "grid-cols-[auto_1fr_auto_auto_auto]"}`}>
+                  {["POS", "CAR · CIRCUIT", "GAP", "TIME", ...(isOwnProfile ? [] : [""])].map((col, i) => (
+                    <div key={i} className="text-xs font-mono text-race-dim tracking-widest">{col}</div>
                   ))}
                 </div>
                 {personalBests.map((pb) => {
@@ -325,7 +325,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
                   const track = pb.tracks as any;
                   const isFirst = pb.rank === 1;
                   return (
-                    <div key={`${car.id}-${track.id}`} className="grid grid-cols-[auto_1fr_auto_auto] border-b border-race-border/40 items-center px-6 py-3 hover:bg-race-muted/20 transition-colors" style={isFirst ? { borderLeft: "2px solid #b84fff" } : {}}>
+                    <div key={`${car.id}-${track.id}`} className={`grid border-b border-race-border/40 items-center px-6 py-3 hover:bg-race-muted/20 transition-colors ${isOwnProfile ? "grid-cols-[auto_1fr_auto_auto]" : "grid-cols-[auto_1fr_auto_auto_auto]"}`} style={isFirst ? { borderLeft: "2px solid #b84fff" } : {}}>
                       <div className="w-10">
                         <span className={`font-display font-black text-xl ${pb.rank === 1 ? "text-neon-purple" : pb.rank === 2 ? "text-lap-silver" : pb.rank === 3 ? "text-lap-bronze" : "text-race-dim"}`}>
                           {pb.rank === 1 ? <Zap size={16} className="text-neon-purple" /> : pb.rank}
@@ -346,6 +346,16 @@ export default async function DriverPage({ params }: DriverPageProps) {
                       <div className="text-right">
                         <span className={`font-mono font-bold ${isFirst ? "text-neon-purple" : "text-race-text"}`}>{pb.lap_time_formatted}</span>
                       </div>
+                      {!isOwnProfile && (
+                        <div className="text-right pl-2">
+                          <Link
+                            href={`/submit?car=${car.id}&track=${track.id}`}
+                            className="text-[10px] font-mono text-race-dim/40 hover:text-neon-purple transition-colors whitespace-nowrap"
+                          >
+                            BEAT THIS ↗
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

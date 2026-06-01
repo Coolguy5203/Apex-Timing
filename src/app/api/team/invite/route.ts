@@ -26,16 +26,12 @@ export async function POST() {
     return NextResponse.json({ error: "You don't have a team yet" }, { status: 400 });
   }
 
-  // Check if invite already exists for this team
-  const { data: existing } = await supabase
+  // Delete all old codes for this team before generating a fresh one
+  // (prevents stale codes from accumulating and remaining valid)
+  await supabase
     .from("team_invites")
-    .select("invite_code")
-    .eq("team_name", profile.team_name)
-    .single();
-
-  if (existing) {
-    return NextResponse.json({ invite_code: existing.invite_code });
-  }
+    .delete()
+    .eq("team_name", profile.team_name);
 
   // Generate a unique code
   let invite_code = generateCode();
@@ -45,7 +41,7 @@ export async function POST() {
       .from("team_invites")
       .select("id")
       .eq("invite_code", invite_code)
-      .single();
+      .maybeSingle();
     if (!clash) break;
     invite_code = generateCode();
     attempts++;
@@ -55,6 +51,7 @@ export async function POST() {
     team_name: profile.team_name,
     invite_code,
     created_by: user.id,
+    created_at: new Date().toISOString(),
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

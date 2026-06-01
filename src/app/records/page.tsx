@@ -75,7 +75,12 @@ export default async function RecordsPage() {
                   <div className="px-5 py-4">
                     <div className="flex items-center gap-2">
                       {index === 0 && <Zap size={12} className="text-neon-purple flex-shrink-0" />}
-                      <p className="font-display font-bold text-race-text tracking-wide text-sm">{track.name}</p>
+                      <Link
+                        href={`/tracks/${track.name.toLowerCase().replace(/\s+/g, "-")}`}
+                        className="font-display font-bold text-race-text tracking-wide text-sm hover:text-neon-purple transition-colors"
+                      >
+                        {track.name}
+                      </Link>
                     </div>
                     {track.country && (
                       <p className="text-race-dim/60 text-xs font-mono flex items-center gap-1 mt-0.5">
