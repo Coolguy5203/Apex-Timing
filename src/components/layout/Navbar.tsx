@@ -24,6 +24,7 @@ const navLinks = [
   { href: "/h2h",           label: "H2H",        icon: Swords  },
   { href: "/championship",  label: "CHAMP",      icon: Star    },
   { href: "/teams",         label: "TEAMS",      icon: Users   },
+  { href: "/cars",          label: "CARS",       icon: Car     },
   { href: "/achievements",  label: "ACHIEVEMENTS", icon: Award   },
   { href: "/challenges",    label: "CHALLENGES",   icon: Target  },
   { href: "/submit",        label: "SUBMIT",       icon: Flag    },

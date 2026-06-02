@@ -77,6 +77,7 @@ export default async function RootLayout({
                 <nav className="flex flex-wrap justify-center gap-x-5 gap-y-1">
                   {[
                     { href: "/leaderboard", label: "LEADERBOARD" },
+                    { href: "/cars", label: "CARS" },
                     { href: "/records", label: "RECORDS" },
                     { href: "/championship", label: "CHAMPIONSHIP" },
                     { href: "/teams", label: "TEAMS" },

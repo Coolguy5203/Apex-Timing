@@ -98,7 +98,9 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
                 )}
               </div>
               <div className="hidden md:block px-4 py-4">
-                <span className="text-race-dim text-sm font-mono">{entry.car_name}</span>
+                <Link href={`/cars/${encodeURIComponent(entry.car_name.toLowerCase().replace(/\s+/g, "-"))}`} className="text-race-dim text-sm font-mono hover:text-neon-purple transition-colors">
+                  {entry.car_name}
+                </Link>
               </div>
               <div className="hidden sm:block px-4 py-4 text-right">
                 <span className={clsx("font-mono text-sm font-medium", entry.is_fastest ? "text-neon-green" : "text-race-dim")}>
