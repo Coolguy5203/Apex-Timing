@@ -1,8 +1,11 @@
+import { FlameIcon, FlameCluster, flameTier } from "@/components/ui/FlameIcon";
+
 interface StreakTier {
   minDays: number;
   label: string;
   sublabel: string;
   flames: string;
+  flameCount: number;
   cardClass: string;
   glowStyle: React.CSSProperties;
   numberClass: string;
@@ -17,6 +20,7 @@ function getTier(days: number): StreakTier {
     label: "LEGENDARY",
     sublabel: "UNSTOPPABLE",
     flames: "🔥🔥🔥🔥🔥",
+    flameCount: 5,
     cardClass: "relative overflow-hidden",
     borderStyle: { border: "1px solid rgba(255,215,0,0.6)", boxShadow: "0 0 40px rgba(255,215,0,0.3), inset 0 0 40px rgba(184,79,255,0.1)" },
     glowStyle: { background: "linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(184,79,255,0.15) 50%, rgba(255,100,0,0.1) 100%)" },
@@ -29,6 +33,7 @@ function getTier(days: number): StreakTier {
     label: "BLAZING",
     sublabel: "30+ DAYS",
     flames: "🔥🔥🔥🔥",
+    flameCount: 4,
     cardClass: "relative overflow-hidden",
     borderStyle: { border: "1px solid rgba(239,68,68,0.7)", boxShadow: "0 0 30px rgba(239,68,68,0.25)" },
     glowStyle: { background: "linear-gradient(135deg, rgba(239,68,68,0.2) 0%, rgba(251,146,60,0.1) 100%)" },
@@ -41,6 +46,7 @@ function getTier(days: number): StreakTier {
     label: "ON FIRE",
     sublabel: "2 WEEK+",
     flames: "🔥🔥🔥",
+    flameCount: 3,
     cardClass: "relative overflow-hidden",
     borderStyle: { border: "1px solid rgba(249,115,22,0.6)", boxShadow: "0 0 24px rgba(249,115,22,0.2)" },
     glowStyle: { background: "linear-gradient(135deg, rgba(249,115,22,0.15) 0%, rgba(239,68,68,0.1) 100%)" },
@@ -53,6 +59,7 @@ function getTier(days: number): StreakTier {
     label: "WEEK STREAK",
     sublabel: "LOCKED IN",
     flames: "🔥🔥",
+    flameCount: 2,
     cardClass: "relative overflow-hidden",
     borderStyle: { border: "1px solid rgba(249,115,22,0.5)", boxShadow: "0 0 18px rgba(249,115,22,0.15)" },
     glowStyle: { background: "linear-gradient(135deg, rgba(249,115,22,0.12) 0%, transparent 100%)" },
@@ -65,6 +72,7 @@ function getTier(days: number): StreakTier {
     label: "HEATING UP",
     sublabel: `${days} DAYS`,
     flames: "🔥🔥",
+    flameCount: 2,
     cardClass: "relative overflow-hidden",
     borderStyle: { border: "1px solid rgba(249,115,22,0.4)" },
     glowStyle: { background: "rgba(249,115,22,0.08)" },
@@ -77,6 +85,7 @@ function getTier(days: number): StreakTier {
     label: "BUILDING",
     sublabel: `${days} DAYS`,
     flames: "🔥",
+    flameCount: 1,
     cardClass: "relative overflow-hidden",
     borderStyle: { border: "1px solid rgba(249,115,22,0.3)" },
     glowStyle: { background: "rgba(249,115,22,0.05)" },
@@ -89,6 +98,7 @@ function getTier(days: number): StreakTier {
     label: "STARTED",
     sublabel: "KEEP IT UP",
     flames: "🔥",
+    flameCount: 1,
     cardClass: "relative overflow-hidden",
     borderStyle: { border: "1px solid rgba(249,115,22,0.2)" },
     glowStyle: { background: "rgba(249,115,22,0.04)" },
@@ -102,6 +112,7 @@ function getTier(days: number): StreakTier {
     label: "NO STREAK",
     sublabel: "SUBMIT A LAP",
     flames: "",
+    flameCount: 0,
     cardClass: "relative overflow-hidden",
     borderStyle: {},
     glowStyle: {},
@@ -130,7 +141,7 @@ export function StreakDisplay({ current, longest, shields = 0, hasLapToday = tru
         className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-mono font-bold"
         style={{ ...tier.borderStyle, background: (tier.glowStyle as any).background || "transparent" }}
       >
-        <span>{tier.flames}</span>
+        <FlameIcon tier={flameTier(current)} size={18} />
         <span className={tier.labelClass}>{current} DAY STREAK</span>
       </span>
     );
@@ -156,11 +167,16 @@ export function StreakDisplay({ current, longest, shields = 0, hasLapToday = tru
 
       <div className="relative">
         {/* Flames — dimmed if no lap today and streak is active */}
-        <div className={`text-xl mb-1 leading-none transition-opacity ${tier.pulse && hasLapToday ? "animate-pulse" : ""} ${current > 0 && !hasLapToday ? "opacity-30 grayscale" : ""}`}>
+        <div className={`flex items-end justify-center mb-1.5 leading-none transition-all ${current > 0 && !hasLapToday ? "opacity-30 grayscale" : ""}`}>
           {current === 0 ? (
-            <span className="text-race-dim opacity-30 text-lg">🔥</span>
+            <FlameIcon tier="dead" size={34} animated={false} />
           ) : (
-            tier.flames
+            <FlameCluster
+              tier={flameTier(current)}
+              count={tier.flameCount}
+              size={current >= 30 ? 46 : 38}
+              animated={hasLapToday}
+            />
           )}
         </div>
 

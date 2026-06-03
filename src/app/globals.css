@@ -20,6 +20,33 @@
   animation: pulse-slow 2.5s ease-in-out infinite;
 }
 
+/* ── Streak flame animations ── */
+@keyframes flameFlicker {
+  0%, 100% { transform: scaleY(1)    scaleX(1)    translateY(0);   opacity: 1; }
+  25%      { transform: scaleY(1.06) scaleX(0.97) translateY(-1%); opacity: 0.92; }
+  50%      { transform: scaleY(0.95) scaleX(1.03) translateY(0.5%); opacity: 1; }
+  75%      { transform: scaleY(1.04) scaleX(0.98) translateY(-0.5%); opacity: 0.96; }
+}
+@keyframes flameFlickerFast {
+  0%, 100% { transform: scaleY(1)    scaleX(1)    translateY(0);   opacity: 1; }
+  20%      { transform: scaleY(1.1)  scaleX(0.94) translateY(-2%); opacity: 0.85; }
+  45%      { transform: scaleY(0.92) scaleX(1.05) translateY(1%);  opacity: 1; }
+  70%      { transform: scaleY(1.08) scaleX(0.96) translateY(-1%); opacity: 0.9; }
+}
+@keyframes emberRise {
+  0%   { transform: translateY(0) scale(1);   opacity: 0; }
+  15%  { opacity: 0.9; }
+  100% { transform: translateY(-180%) scale(0.3); opacity: 0; }
+}
+@keyframes auraPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.12); }
+}
+.flame-flicker  { animation: flameFlicker 1.6s ease-in-out infinite; transform-origin: center bottom; }
+.flame-flicker-fast { animation: flameFlickerFast 0.9s ease-in-out infinite; transform-origin: center bottom; }
+.flame-ember    { animation: emberRise 1.8s ease-in infinite; }
+.flame-aura     { animation: auraPulse 2.2s ease-in-out infinite; transform-origin: center; }
+
 @layer base {
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
