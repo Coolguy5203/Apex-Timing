@@ -29,7 +29,8 @@ export default async function CarsPage() {
   }
 
   // Group by class
-  const byClass = new Map<string, typeof cars>();
+  type CarRow = NonNullable<typeof cars>[number];
+  const byClass = new Map<string, CarRow[]>();
   for (const car of cars ?? []) {
     if (!byClass.has(car.class)) byClass.set(car.class, []);
     byClass.get(car.class)!.push(car);
