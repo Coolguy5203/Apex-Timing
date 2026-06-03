@@ -111,7 +111,7 @@ export default async function RecordsPage() {
                   {/* Time */}
                   <div className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      {isVerified && <ShieldCheck size={11} className="text-neon-green" title="Admin verified" />}
+                      {isVerified && <span title="Admin verified"><ShieldCheck size={11} className="text-neon-green" /></span>}
                       <Link
                         href={`/recap/${record.id}`}
                         className={`font-mono font-bold text-base hover:underline transition-colors ${index === 0 ? "lap-time-fastest text-lg" : "text-race-text"}`}
