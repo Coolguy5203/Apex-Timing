@@ -383,7 +383,7 @@ export default async function DriverPage({ params }: DriverPageProps) {
                         </div>
                         <div className="text-right flex-shrink-0">
                           <div className="flex items-center justify-end gap-1">
-                            {isApproved && <ShieldCheck size={11} className="text-neon-green" title="Admin verified" />}
+                            {isApproved && <span title="Admin verified"><ShieldCheck size={11} className="text-neon-green" /></span>}
                             <p className={`text-sm font-mono font-bold ${isFlagged ? "text-yellow-400/70" : isApproved ? "text-neon-green" : "text-neon-purple"}`}>{lap.lap_time_formatted}</p>
                           </div>
                           <p className="text-race-dim text-xs font-mono">{formatRelativeTime(lap.submitted_at)}</p>
