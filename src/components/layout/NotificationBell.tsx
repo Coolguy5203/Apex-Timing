@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, Trophy, Zap, Flame, Target, X, CheckCheck, AlertTriangle } from "lucide-react";
+import { Bell, Trophy, Zap, Target, X, CheckCheck, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { formatRelativeTime } from "@/utils/lapTime";
+import { FlameIcon } from "@/components/ui/FlameIcon";
 
 interface Notification {
   id: string;
@@ -18,7 +19,7 @@ interface Notification {
 const TYPE_META: Record<string, { icon: React.ReactNode; color: string }> = {
   ACHIEVEMENT_UNLOCKED: { icon: <Trophy size={14} />, color: "text-yellow-400" },
   LAP_BEATEN:           { icon: <Zap size={14} />,    color: "text-neon-purple" },
-  STREAK_MILESTONE:     { icon: <Flame size={14} />,  color: "text-orange-400" },
+  STREAK_MILESTONE:     { icon: <FlameIcon tier="onfire" size={16} />, color: "text-orange-400" },
   CHALLENGE_ACTIVE:     { icon: <Target size={14} />, color: "text-neon-green" },
   RANK_PROMOTION:       { icon: <Trophy size={14} />, color: "text-yellow-400" },
   RANK_CHANGE:          { icon: <Trophy size={14} />, color: "text-race-dim" },
@@ -27,7 +28,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; color: string }> = {
   H2H_LOSS:             { icon: <Zap size={14} />,    color: "text-race-dim" },
   CHALLENGE_WIN:        { icon: <Trophy size={14} />, color: "text-neon-green" },
   LAP_FLAGGED:          { icon: <AlertTriangle size={14} />, color: "text-yellow-400" },
-  STREAK_AT_RISK:       { icon: <Flame size={14} />,        color: "text-orange-400" },
+  STREAK_AT_RISK:       { icon: <FlameIcon tier="spark" size={16} animated={false} />, color: "text-orange-400" },
 };
 
 export function NotificationBell() {
