@@ -22,8 +22,25 @@ const PERIOD = "/month";
 // Stripe Payment Link (subscription). Set NEXT_PUBLIC_STRIPE_PRO_URL in your env.
 const STRIPE_URL = process.env.NEXT_PUBLIC_STRIPE_PRO_URL;
 
-export function ProUpgrade() {
+interface ProUpgradeProps {
+  userId?: string;
+  email?: string;
+}
+
+export function ProUpgrade({ userId, email }: ProUpgradeProps) {
   const router = useRouter();
+
+  // Append client_reference_id (app user id) + prefilled email so the Stripe webhook
+  // can match the payment back to this account reliably.
+  const subscribeUrl = (() => {
+    if (!STRIPE_URL) return null;
+    const params = new URLSearchParams();
+    if (userId) params.set("client_reference_id", userId);
+    if (email) params.set("prefilled_email", email);
+    const qs = params.toString();
+    if (!qs) return STRIPE_URL;
+    return STRIPE_URL + (STRIPE_URL.includes("?") ? "&" : "?") + qs;
+  })();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -119,9 +136,9 @@ export function ProUpgrade() {
           </div>
           <p className="text-race-dim/60 text-xs font-mono mb-6">Cancel anytime · billed monthly</p>
 
-          {STRIPE_URL ? (
+          {subscribeUrl ? (
             <a
-              href={STRIPE_URL}
+              href={subscribeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-md font-display font-bold tracking-widest text-base transition-all duration-200"

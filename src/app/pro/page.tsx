@@ -21,7 +21,7 @@ export default async function ProPage() {
         {profile?.is_pro ? (
           <ProDashboard profile={profile} />
         ) : (
-          <ProUpgrade />
+          <ProUpgrade userId={user.id} email={profile?.email ?? user.email ?? undefined} />
         )}
       </div>
     </div>
