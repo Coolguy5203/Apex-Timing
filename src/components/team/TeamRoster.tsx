@@ -55,8 +55,8 @@ export function TeamRoster({ drivers, currentUserId, currentUserRank }: TeamRost
         showMsg("error", data.error, targetId);
       } else {
         const rank = getRank(newRank);
-        const msg = data.pro_code
-          ? `Promoted to ${rank.name} — PRO code ${data.pro_code} sent via notification`
+        const msg = data.pro_granted
+          ? `Promoted to ${rank.name} — PRO unlocked free on their account`
           : `Rank updated to ${rank.name}`;
         showMsg("success", msg, targetId);
         setTimeout(() => router.refresh(), 1500);
@@ -76,7 +76,7 @@ export function TeamRoster({ drivers, currentUserId, currentUserRank }: TeamRost
           <div key={rank.level} className={clsx("flex items-center gap-1.5 px-2 py-1 rounded border text-xs font-mono", rank.bg, rank.border, rank.color)}>
             <span>{rank.insignia}</span>
             <span className="font-bold">{rank.name}</span>
-            <span className="opacity-60">· max {rank.maxPerTeam}/team · PRO</span>
+            <span className="opacity-60">· max {rank.maxPerTeam}/team{rank.grantsPro ? " · FREE PRO" : ""}</span>
           </div>
         ))}
       </div>

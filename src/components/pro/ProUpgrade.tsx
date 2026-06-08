@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, Check, AlertCircle, ChevronRight, Star, Shield, BarChart2, Car, MapPin, Users, Trophy } from "lucide-react";
+import { Zap, Check, AlertCircle, ChevronRight, Star, Shield, BarChart2, Car, MapPin, Users, Trophy, Flag } from "lucide-react";
 import clsx from "clsx";
 
 const PRO_FEATURES = [
@@ -15,12 +15,20 @@ const PRO_FEATURES = [
   { icon: Shield, title: "Priority Support", description: "Direct access to the APEX TIMING team for help and feature requests", free: false, pro: true },
 ];
 
+// Pricing — edit here to change the displayed package price.
+const PRICE = "$4.99";
+const PERIOD = "/month";
+
+// Stripe Payment Link (subscription). Set NEXT_PUBLIC_STRIPE_PRO_URL in your env.
+const STRIPE_URL = process.env.NEXT_PUBLIC_STRIPE_PRO_URL;
+
 export function ProUpgrade() {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showCode, setShowCode] = useState(false);
 
   // Get or create a stable device ID stored in localStorage
   const getDeviceId = (): string => {
@@ -81,7 +89,7 @@ export function ProUpgrade() {
   return (
     <div>
       {/* Header */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-lap-gold/10 border border-lap-gold/30 rounded-full mb-6">
           <Zap size={14} className="text-lap-gold" />
           <span className="text-lap-gold text-xs font-mono font-bold tracking-widest">APEX TIMING PRO</span>
@@ -95,50 +103,104 @@ export function ProUpgrade() {
         </p>
       </div>
 
-      {/* Code redemption box */}
-      <div className="max-w-md mx-auto mb-16">
-        <div className="race-card p-6" style={{ borderColor: "rgba(255,215,0,0.2)", boxShadow: "0 0 40px rgba(255,215,0,0.05)" }}>
-          <p className="section-label mb-3 text-center">HAVE A PRO CODE?</p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(""); }}
-              onKeyDown={(e) => e.key === "Enter" && handleRedeem()}
-              placeholder="ENTER-CODE-HERE"
-              className="input-field flex-1 tracking-widest text-center uppercase"
-              style={{ borderColor: error ? "rgba(239,68,68,0.5)" : code ? "rgba(255,215,0,0.4)" : undefined }}
-            />
-            <button
-              onClick={handleRedeem}
-              disabled={loading}
-              className="flex items-center gap-2 px-5 py-3 rounded-md font-display font-bold tracking-widest text-sm transition-all duration-200 disabled:opacity-50 flex-shrink-0"
-              style={{
-                background: "linear-gradient(135deg, #ffd700, #ffaa00)",
-                color: "#0a0a0b",
-                boxShadow: code ? "0 0 20px rgba(255,215,0,0.3)" : "none",
-              }}
-            >
-              {loading ? (
-                <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-              ) : (
-                <>UNLOCK <ChevronRight size={14} /></>
-              )}
-            </button>
+      {/* Pricing card */}
+      <div className="max-w-md mx-auto mb-10">
+        <div
+          className="race-card p-8 text-center relative overflow-hidden"
+          style={{ borderColor: "rgba(255,215,0,0.35)", boxShadow: "0 0 60px rgba(255,215,0,0.08)" }}
+        >
+          <div className="absolute inset-x-0 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(255,215,0,0.6), transparent)" }} />
+
+          <p className="section-label mb-2 tracking-widest" style={{ color: "#ffd700" }}>PRO MEMBERSHIP</p>
+
+          <div className="flex items-end justify-center gap-1 mb-1">
+            <span className="font-display font-black text-6xl" style={{ color: "#ffd700", textShadow: "0 0 24px rgba(255,215,0,0.35)" }}>{PRICE}</span>
+            <span className="text-race-dim font-mono text-sm mb-2">{PERIOD}</span>
           </div>
-          {error && (
-            <p className="mt-2 text-red-400 text-xs font-mono flex items-center gap-1 justify-center">
-              <AlertCircle size={11} />{error}
-            </p>
+          <p className="text-race-dim/60 text-xs font-mono mb-6">Cancel anytime · billed monthly</p>
+
+          {STRIPE_URL ? (
+            <a
+              href={STRIPE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-md font-display font-bold tracking-widest text-base transition-all duration-200"
+              style={{ background: "linear-gradient(135deg, #ffd700, #ffaa00)", color: "#0a0a0b", boxShadow: "0 0 24px rgba(255,215,0,0.3)" }}
+            >
+              SUBSCRIBE TO PRO <ChevronRight size={16} />
+            </a>
+          ) : (
+            <button
+              disabled
+              className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-md font-display font-bold tracking-widest text-base bg-race-muted text-race-dim cursor-not-allowed"
+            >
+              COMING SOON
+            </button>
           )}
-          <p className="text-race-dim/50 text-xs font-mono text-center mt-3">
-            Codes are issued by admins or on team rank promotion · 1 use · device-locked
+
+          <p className="text-race-dim/50 text-[11px] font-mono mt-4 leading-relaxed">
+            Secure checkout via Stripe. Your PRO features activate as soon as your subscription is confirmed.
           </p>
+        </div>
+
+        {/* Free-for-RD callout */}
+        <div className="mt-4 flex items-center justify-center gap-2 text-center px-4 py-3 rounded-lg bg-yellow-400/5 border border-yellow-400/20">
+          <Flag size={14} className="text-yellow-400 flex-shrink-0" />
+          <p className="text-yellow-400/90 text-xs font-mono">
+            Team <span className="font-bold">RACE DIRECTORS</span> get PRO free — create or lead a team to unlock it.
+          </p>
+        </div>
+
+        {/* Redeem code (collapsed) */}
+        <div className="mt-4 text-center">
+          {!showCode ? (
+            <button
+              onClick={() => setShowCode(true)}
+              className="text-race-dim/60 hover:text-race-dim text-xs font-mono tracking-widest transition-colors"
+            >
+              HAVE A PRO CODE? →
+            </button>
+          ) : (
+            <div className="race-card p-4 mt-2" style={{ borderColor: "rgba(255,215,0,0.2)" }}>
+              <p className="section-label mb-3 text-center">REDEEM PRO CODE</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={code}
+                  onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleRedeem()}
+                  placeholder="ENTER-CODE-HERE"
+                  className="input-field flex-1 tracking-widest text-center uppercase"
+                  style={{ borderColor: error ? "rgba(239,68,68,0.5)" : code ? "rgba(255,215,0,0.4)" : undefined }}
+                />
+                <button
+                  onClick={handleRedeem}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-5 py-3 rounded-md font-display font-bold tracking-widest text-sm transition-all duration-200 disabled:opacity-50 flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg, #ffd700, #ffaa00)", color: "#0a0a0b", boxShadow: code ? "0 0 20px rgba(255,215,0,0.3)" : "none" }}
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                  ) : (
+                    <>UNLOCK <ChevronRight size={14} /></>
+                  )}
+                </button>
+              </div>
+              {error && (
+                <p className="mt-2 text-red-400 text-xs font-mono flex items-center gap-1 justify-center">
+                  <AlertCircle size={11} />{error}
+                </p>
+              )}
+              <p className="text-race-dim/50 text-xs font-mono text-center mt-3">
+                1 use · device-locked
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Feature comparison */}
-      <div className="race-card overflow-hidden mb-8">
+      <div className="race-card overflow-hidden mb-8 max-w-3xl mx-auto">
         {/* Table header */}
         <div className="grid grid-cols-[1fr_auto_auto] border-b border-race-border bg-race-dark">
           <div className="px-6 py-4 text-xs font-mono text-race-dim tracking-widest">FEATURE</div>
@@ -186,7 +248,7 @@ export function ProUpgrade() {
       </div>
 
       <p className="text-race-dim/40 text-xs font-mono text-center">
-        APEX TIMING PRO · CONTACT AN ADMIN FOR ACCESS CODES
+        APEX TIMING PRO · {PRICE}{PERIOD} · FREE FOR TEAM RACE DIRECTORS
       </p>
     </div>
   );

@@ -67,9 +67,10 @@ export function TeamSettings({ userId, teamName, existingInviteCode }: TeamSetti
     if (!newTeamName.trim()) return;
     setLoading("create");
     const supabase = createClient();
+    // Founder becomes RACE DIRECTOR (rank 2), which includes free PRO.
     const { error } = await supabase
       .from("users")
-      .update({ team_name: newTeamName.trim(), team_rank: 2 })
+      .update({ team_name: newTeamName.trim(), team_rank: 2, is_pro: true })
       .eq("id", userId);
     if (error) { showMsg("error", error.message); }
     else {

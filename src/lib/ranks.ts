@@ -27,7 +27,7 @@ export const RANKS: Rank[] = [
     name: "ENGINEER",
     short: "ENG",
     maxPerTeam: 4,
-    grantsPro: true,
+    grantsPro: false,
     color: "text-neon-green",
     bg: "bg-neon-green/10",
     border: "border-neon-green/30",
